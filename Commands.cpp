@@ -99,8 +99,7 @@ SmallShell::~SmallShell() {
 */
 Command * SmallShell::CreateCommand(const char* cmd_line) {
 
-    string cmd_s = string(cmd_line);
-    char** args;
+    char* args[COMMAND_MAX_ARGS];
     char* copy_cmd_line= const_cast<char *>(cmd_line);
 
     bool isBackground=false;
@@ -157,7 +156,8 @@ void ShowPidCommand::execute() {
 
 
 
-Command::Command(char **args, int len) {
+Command::Command(char** args, int len) {
+    ///to do:to chang args
     this->args=args;
     this->len=len;
 }

@@ -112,11 +112,16 @@ class HistoryCommand : public BuiltInCommand {
 };
 
 class JobsList {
-    std::vector<Command> command_vector;
+
  public:
   class JobEntry {
    // TODO: Add your data members
+   unsigned int job_id;
+   Command* command;
   };
+
+private:
+  std::vector<JobEntry> command_vector;
  // TODO: Add your data members
  public:
   JobsList();
