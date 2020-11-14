@@ -9,9 +9,13 @@
 
 class Command {
 // TODO: Add your data members
+protected:
+    char** args;
+    int len;
  public:
   Command(const char* cmd_line);
-  virtual ~Command();
+  Command(char** args,int len);
+  virtual ~Command() {};
   virtual void execute() = 0;
   //virtual void prepare();
   //virtual void cleanup();
@@ -19,9 +23,11 @@ class Command {
 };
 
 class BuiltInCommand : public Command {
+
  public:
   BuiltInCommand(const char* cmd_line);
-  virtual ~BuiltInCommand() {}
+    BuiltInCommand(char** arg, int len): Command(arg,len){} ;
+  virtual ~BuiltInCommand() {};
 };
 
 class ExternalCommand : public Command {
@@ -49,13 +55,15 @@ class RedirectionCommand : public Command {
   //void cleanup() override;
 };
 
+///cd
+
 class ChangeDirCommand : public BuiltInCommand {
 // TODO: Add your data members public:
   ChangeDirCommand(const char* cmd_line, char** plastPwd);
   virtual ~ChangeDirCommand() {}
   void execute() override;
 };
-
+///pwd
 class GetCurrDirCommand : public BuiltInCommand {
  public:
   GetCurrDirCommand(const char* cmd_line);
@@ -63,14 +71,18 @@ class GetCurrDirCommand : public BuiltInCommand {
   void execute() override;
 };
 
+///showpid
+
 class ShowPidCommand : public BuiltInCommand {
  public:
   ShowPidCommand(const char* cmd_line);
-  virtual ~ShowPidCommand() {}
+  ShowPidCommand(char** args, int len): BuiltInCommand(args, len){};
+  virtual ~ShowPidCommand() {};
   void execute() override;
 };
 
 class JobsList;
+///quit
 class QuitCommand : public BuiltInCommand {
 // TODO: Add your data members public:
   QuitCommand(const char* cmd_line, JobsList* jobs);
@@ -100,6 +112,7 @@ class HistoryCommand : public BuiltInCommand {
 };
 
 class JobsList {
+    std::vector<Command> command_vector;
  public:
   class JobEntry {
    // TODO: Add your data members
@@ -157,7 +170,7 @@ class BackgroundCommand : public BuiltInCommand {
 class SmallShell {
  private:
   // TODO: Add your data members
-  std::vector<Command> command_vector;
+
   SmallShell();
  public:
   Command *CreateCommand(const char* cmd_line);

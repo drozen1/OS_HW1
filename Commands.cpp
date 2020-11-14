@@ -114,6 +114,10 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
     int len= _parseCommandLine(const_copy,args);
     char* name_of_command= args[0];
     if(len<=1+COMMAND_MAX_ARGS){
+        char key[] = "showpid";
+        if(strcmp(name_of_command,key)==0){
+            return new ShowPidCommand(args,len);
+        }
 
     }
 
@@ -134,10 +138,26 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
 
 void SmallShell::executeCommand(const char *cmd_line) {
     Command* cmd = CreateCommand(cmd_line);
+    if(cmd!= NULL) {
+        cmd->execute();
+    }
+
 
   // TODO: Add your implementation here
   // for example:
   // Command* cmd = CreateCommand(cmd_line);
   // cmd->execute();
   // Please note that you must fork smash process for some commands (e.g., external commands....)
+}
+
+void ShowPidCommand::execute() {
+    pid_t t = getpid();
+    std::cout << "smash pid is "<<t<<"\n";
+}
+
+
+
+Command::Command(char **args, int len) {
+    this->args=args;
+    this->len=len;
 }
