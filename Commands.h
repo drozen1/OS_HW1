@@ -96,7 +96,7 @@ public:
     }
 
     void execute() override {
-        std::cout << str;
+        std::cout << str; ///// \n?
     }
 };
 
@@ -161,7 +161,10 @@ public:
     ChangeDirCommand(char **args, int len) : BuiltInCommand(args, len) {};
 
     //ChangeDirCommand(const char* cmd_line, char** plastPwd);
-
+    void Set_Orig_Vals(char **args, int len){
+        this->args=args;
+        this->len=len;
+    }
     virtual ~ChangeDirCommand() {}
 
     void execute() override {
@@ -171,13 +174,21 @@ public:
             lastCd = getcwd(NULL, 0);
 
             if (strcmp(args[1], key) == 0) {
-                chdir(temp);
+                if(temp!=NULL) {
+                    chdir(temp);
+                }else{
+                    std::cout << "smash error: cd: OLDPWD not set";
+                }
             } else {
                 chdir(args[1]);
 
             }
         }
+        if(len>2){
+            std::cout << "smash error: cd: too many arguments"<<"\n";
+        }
 
+        ///treat case when SYS CALL fail + case of no arg
     }
 };
 

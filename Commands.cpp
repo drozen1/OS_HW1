@@ -132,6 +132,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call,C
         }
         char key4[] = "cd";
         if (strcmp(name_of_command, key4) == 0) {
+            cd.Set_Orig_Vals(args,len);
             cd.execute();
             return nullptr;
         }
