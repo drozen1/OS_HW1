@@ -16,13 +16,17 @@ int main(int argc, char *argv[]) {
     //TODO: setup sig alarm handler
     ChpromptCommand call = ChpromptCommand(nullptr, 0);
     SmallShell &smash = SmallShell::getInstance();
+     char* temp = getcwd(NULL, 0);
+    char* arg_to_cd[0];
+    arg_to_cd[0]=temp;
+    ChangeDirCommand it_is_cd=ChangeDirCommand(arg_to_cd, 2);
     while (true) {
         //print prompt
         call.execute();
 
         std::string cmd_line;
         std::getline(std::cin, cmd_line);
-        smash.executeCommand(cmd_line.c_str(), call);
+        smash.executeCommand(cmd_line.c_str(), call,it_is_cd);
     }
     return 0;
 }

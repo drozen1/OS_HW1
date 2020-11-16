@@ -4,6 +4,7 @@
 #include <vector>
 #include <dirent.h>
 #include <unistd.h>
+#include <string.h>
 
 #define COMMAND_ARGS_MAX_LENGTH (200)
 #define COMMAND_MAX_ARGS (20)
@@ -155,21 +156,29 @@ public:
 ///cd
 class ChangeDirCommand : public BuiltInCommand {
 private:
-    std::string str;
+    char *lastCd;
 public:
     ChangeDirCommand(char **args, int len) : BuiltInCommand(args, len) {};
 
     //ChangeDirCommand(const char* cmd_line, char** plastPwd);
 
     virtual ~ChangeDirCommand() {}
-    void changTheOldPath(char **args, int len){
-        //if(strcmp(args[1],"-")==0){
 
-       // }
+    void execute() override {
+        if(len==2) {
+            char key[] = "-";
+            char *temp = lastCd;
+            lastCd = getcwd(NULL, 0);
 
-    };
+            if (strcmp(args[1], key) == 0) {
+                chdir(temp);
+            } else {
+                chdir(args[1]);
 
-    void execute() override;
+            }
+        }
+
+    }
 };
 
 
@@ -283,7 +292,7 @@ private:
     SmallShell();
 
 public:
-    Command *CreateCommand(const char *cmd_line, ChpromptCommand &call);
+    Command *CreateCommand(const char *cmd_line, ChpromptCommand &call,ChangeDirCommand& cd);
 
     SmallShell(SmallShell const &) = delete; // disable copy ctor
     void operator=(SmallShell const &) = delete; // disable = operator
@@ -296,7 +305,7 @@ public:
 
     ~SmallShell();
 
-    void executeCommand(const char *cmd_line, ChpromptCommand &call);
+    void executeCommand(const char *cmd_line, ChpromptCommand &call,ChangeDirCommand& cd);
     // TODO: add extra methods as needed
 };
 

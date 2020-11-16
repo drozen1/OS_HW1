@@ -1,5 +1,4 @@
 #include <unistd.h>
-#include <string.h>
 #include <iostream>
 #include <vector>
 #include <sstream>
@@ -94,7 +93,7 @@ SmallShell::~SmallShell() {
 /**
 * Creates and returns a pointer to Command class which matches the given command line (cmd_line)
 */
-Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call) {
+Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call,ChangeDirCommand& cd) {
     ///do to: we do a new to a command and it will be a memory lip
 
     char *args[COMMAND_MAX_ARGS];
@@ -111,24 +110,31 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call) 
     int len = _parseCommandLine(const_copy, args);
     char *name_of_command = args[0];
     if (len <= 1 + COMMAND_MAX_ARGS) {
-        char key[] = "showpid";
-        if (strcmp(name_of_command, key) == 0) {
-            return new ShowPidCommand(args, len);
-        }
         char key1[] = "chprompt";
         if (strcmp(name_of_command, key1) == 0) {
             call.changTheString(args, len);
             return nullptr;
         }
-        char key2[] = "ls";
-        if(strcmp(name_of_command, key2) == 0){
-            return new LsDirCommand(args, len);
-        }
-        char key3[]="pwd";
-        if(strcmp(name_of_command, key3) == 0){
-            return new GetCurrDirCommand(args, len);
-        }
+        if(len==1) {
+            char key[] = "showpid";
+            if (strcmp(name_of_command, key) == 0) {
+                return new ShowPidCommand(args, len);
+            }
 
+            char key2[] = "ls";
+            if (strcmp(name_of_command, key2) == 0) {
+                return new LsDirCommand(args, len);
+            }
+            char key3[] = "pwd";
+            if (strcmp(name_of_command, key3) == 0) {
+                return new GetCurrDirCommand(args, len);
+            }
+        }
+        char key4[] = "cd";
+        if (strcmp(name_of_command, key4) == 0) {
+            cd.execute();
+            return nullptr;
+        }
 
     }
 
@@ -148,8 +154,8 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call) 
     return nullptr;
 }
 
-void SmallShell::executeCommand(const char *cmd_line, ChpromptCommand &call) {
-    Command *cmd = CreateCommand(cmd_line, call);
+void SmallShell::executeCommand(const char *cmd_line, ChpromptCommand &call,ChangeDirCommand& cd) {
+    Command *cmd = CreateCommand(cmd_line, call,cd);
     ///to do a delete to all bulit in command because we make a new.
     if (cmd != NULL) {
         cmd->execute();
