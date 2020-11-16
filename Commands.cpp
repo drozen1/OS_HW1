@@ -120,6 +120,10 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call) 
             call.changTheString(args, len);
             return nullptr;
         }
+        char key2[] = "ls";
+        if(strcmp(name_of_command, key2) == 0){
+            return new LsDirCommand(args, len);
+        }
 
 
     }

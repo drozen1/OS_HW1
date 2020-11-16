@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <dirent.h>
+#include <unistd.h>
 
 #define COMMAND_ARGS_MAX_LENGTH (200)
 #define COMMAND_MAX_ARGS (20)
@@ -97,16 +98,34 @@ public:
 };
 ///ls
 class LsDirCommand : public BuiltInCommand {
-// TODO: Add your data members public:
+private:
+    struct dirent **fileListTemp;
+    int num_of_files;
+public:
+    // TODO: Add your data members public:
     LsDirCommand(char **args, int len) : BuiltInCommand(args, len) {
-        char buffer[COMMAND_ARGS_MAX_LENGTH];
-        char* name_list[COMMAND_ARGS_MAX_LENGTH];
-        scandir(getcwd(buffer,COMMAND_ARGS_MAX_LENGTH),&name_list, NULL,alphasort);
+
+        char *buffer = getcwd(NULL, 0);
+        num_of_files=scandir(buffer,&fileListTemp, NULL,alphasort);
+        //printf(buffer);
+        free(buffer);
+
     };
     //LsDirCommand(const char* cmd_line, char** plastPwd);
     virtual ~LsDirCommand() {}
 
-    void execute() override;
+    void execute() override{
+        ///i chang it to start whit 2 because the i[0]=. and i[1]= .. and we dont want to print them.
+        ///we need to check if it is allways like this
+        for(int i=2; i<num_of_files;i++) {
+            std::cout << fileListTemp[i]->d_name << "\n";
+        }
+        //free all the things that scandir is allocat
+        for(int i=0; i<num_of_files;i++){
+            free(fileListTemp[i]);
+        }
+        free(fileListTemp);
+    }
 };
 
 ///cd
