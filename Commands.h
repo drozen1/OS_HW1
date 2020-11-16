@@ -20,8 +20,10 @@ public:
     virtual ~Command() {
         ///to do: check if we free all the elements
         for (int i = 0; i < len; i++) {
-            delete args[i];
+            //we use malloc so we need to free it and not delete it
+            free(args[i]);
         }
+        //free(*args);
     };
 
     virtual void execute() = 0;
@@ -77,10 +79,10 @@ class ChpromptCommand : public BuiltInCommand {
 private:
     std::string str;
 public:
-// TODO: Add your data members public:
     ChpromptCommand(char **args, int len) : BuiltInCommand(args, len), str("smash> ") {};
 
     //ChpromptCommand(const char* cmd_line, char** plastPwd);
+
     virtual ~ChpromptCommand() {}
 
     void changTheString(char **args, int len) {
@@ -96,6 +98,7 @@ public:
         std::cout << str;
     }
 };
+
 ///ls
 class LsDirCommand : public BuiltInCommand {
 private:
@@ -106,48 +109,69 @@ public:
     LsDirCommand(char **args, int len) : BuiltInCommand(args, len) {
 
         char *buffer = getcwd(NULL, 0);
-        num_of_files=scandir(buffer,&fileListTemp, NULL,alphasort);
-        //printf(buffer);
+        num_of_files = scandir(buffer, &fileListTemp, NULL, alphasort);
         free(buffer);
 
     };
+
     //LsDirCommand(const char* cmd_line, char** plastPwd);
+
     virtual ~LsDirCommand() {}
 
-    void execute() override{
+    void execute() override {
         ///i chang it to start whit 2 because the i[0]=. and i[1]= .. and we dont want to print them.
         ///we need to check if it is allways like this
-        for(int i=2; i<num_of_files;i++) {
+        for (int i = 2; i < num_of_files; i++) {
             std::cout << fileListTemp[i]->d_name << "\n";
         }
         //free all the things that scandir is allocat
-        for(int i=0; i<num_of_files;i++){
+        for (int i = 0; i < num_of_files; i++) {
             free(fileListTemp[i]);
         }
         free(fileListTemp);
     }
 };
 
-///cd
-class ChangeDirCommand : public BuiltInCommand {
-// TODO: Add your data members public:
-    ChangeDirCommand(char **args, int len) : BuiltInCommand(args, len) {};
-
-    //ChangeDirCommand(const char* cmd_line, char** plastPwd);
-    virtual ~ChangeDirCommand() {}
-
-    void execute() override;
-};
-
 ///pwd
 class GetCurrDirCommand : public BuiltInCommand {
+private:
+    char *buffer = nullptr;
 public:
     GetCurrDirCommand(const char *cmd_line);
 
+    GetCurrDirCommand(char **args, int len) : BuiltInCommand(args, len) {
+
+        buffer = getcwd(NULL, 0);
+    };
+
     virtual ~GetCurrDirCommand() {}
+
+    void execute() override {
+        std::cout << buffer << "\n";
+        free(buffer);
+    }
+};
+
+///cd
+class ChangeDirCommand : public BuiltInCommand {
+private:
+    std::string str;
+public:
+    ChangeDirCommand(char **args, int len) : BuiltInCommand(args, len) {};
+
+    //ChangeDirCommand(const char* cmd_line, char** plastPwd);
+
+    virtual ~ChangeDirCommand() {}
+    void changTheOldPath(char **args, int len){
+        //if(strcmp(args[1],"-")==0){
+
+       // }
+
+    };
 
     void execute() override;
 };
+
 
 ///showpid
 

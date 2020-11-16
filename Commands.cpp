@@ -124,6 +124,10 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call) 
         if(strcmp(name_of_command, key2) == 0){
             return new LsDirCommand(args, len);
         }
+        char key3[]="pwd";
+        if(strcmp(name_of_command, key3) == 0){
+            return new GetCurrDirCommand(args, len);
+        }
 
 
     }
@@ -146,6 +150,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call) 
 
 void SmallShell::executeCommand(const char *cmd_line, ChpromptCommand &call) {
     Command *cmd = CreateCommand(cmd_line, call);
+    ///to do a delete to all bulit in command because we make a new.
     if (cmd != NULL) {
         cmd->execute();
     }

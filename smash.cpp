@@ -17,8 +17,9 @@ int main(int argc, char *argv[]) {
     ChpromptCommand call = ChpromptCommand(nullptr, 0);
     SmallShell &smash = SmallShell::getInstance();
     while (true) {
+        //print prompt
         call.execute();
-        //std::cout << "smash> "; // TODO: change this (why?)
+
         std::string cmd_line;
         std::getline(std::cin, cmd_line);
         smash.executeCommand(cmd_line.c_str(), call);
