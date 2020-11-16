@@ -181,3 +181,42 @@ Command::Command(char **args, int len) {
     this->args = args;
     this->len = len;
 }
+
+JobsList::JobEntry::JobEntry(unsigned int job_id, bool is_running, Command *command, pid_t pid) {
+    this->is_running=is_running;
+    this->job_id=job_id;
+    this->command=command;
+    this->pid=pid;
+    this->start_time=time(NULL);
+}
+
+void JobsList::addJob(Command *cmd,unsigned int job_id, bool is_running) {
+    if(this->command_vector.size()==0){
+        JobEntry new_job= JobEntry(1,is_running,cmd,job_id);
+        this->command_vector.push_back(new_job);
+    }else{
+        unsigned int max_JobId= this->command_vector.back().getJob_id();
+        JobEntry new_job= JobEntry(1+max_JobId,is_running,cmd,job_id);
+        this->command_vector.push_back(new_job);
+    }
+}
+
+void JobsList::printJobsList() {
+    for(vector<JobEntry>::iterator i= command_vector.begin();
+    i!= command_vector.end(); ++i){
+        unsigned int job_id=i->getJob_id();
+        std::string command_name=i->getCommand();
+        time_t curr_time= time(NULL);
+        double diff_time=difftime(curr_time,i->getTime());
+        pid_t pid= i->getpid();
+        if(i->getIs_running()) {
+            cout <<"["<<job_id<<"]"<< command_name<<"& : "<<pid<<" "<<diff_time<<"\n";
+            //[1] sleep 100& : 30901 18 secs
+        }else{
+            cout <<"["<<job_id<<"]"<< command_name<<" : "<<pid<<" "<<diff_time<<" "<<"(stopped)"<<"\n";
+            //[2] sleep 200 : 30902 11 secs (stopped)
+        }
+    }
+}
+
+

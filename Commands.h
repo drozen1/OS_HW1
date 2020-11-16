@@ -17,6 +17,13 @@ protected:
 public:
     //Command(const char* cmd_line);
     Command(char **args, int len);
+    std::string print_command(){
+        std::string ret="";
+        for (int i=0; i<len; i++){
+            ret+=args[i];
+        }
+        return ret;
+    }
 
     virtual ~Command() {
         ///to do: check if we free all the elements
@@ -222,9 +229,37 @@ class JobsList {
 
 public:
     class JobEntry {
-        // TODO: Add your data members
+
+
+// TODO: Add your data members
         unsigned int job_id;
+        bool is_running;
         Command *command;
+        time_t start_time;
+        pid_t pid;
+    public:
+        JobEntry(unsigned int job_id, bool is_running, Command *command, pid_t pid);
+        ~JobEntry(){
+            delete command;
+        }
+        unsigned int getJob_id(){
+            return job_id;
+        }
+        pid_t getpid(){
+            return pid;
+        }
+        time_t getTime(){
+            return start_time;
+        }
+        bool getIs_running(){
+            return is_running;
+        }
+        void SetIs_running(bool new_state){
+            this->is_running=new_state;
+        }
+        std::string getCommand(){
+            return command->print_command();
+        }
     };
 
 private:
@@ -235,7 +270,7 @@ public:
 
     ~JobsList();
 
-    void addJob(Command *cmd, bool isStopped = false);
+    void addJob(Command *cmd,unsigned int job_id, bool is_running);
 
     void printJobsList();
 
