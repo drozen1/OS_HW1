@@ -14,13 +14,14 @@ int main(int argc, char* argv[]) {
 //    }
 
     //TODO: setup sig alarm handler
-
+    ChpromptCommand call= ChpromptCommand(nullptr,0);
    SmallShell& smash = SmallShell::getInstance();
     while(true) {
-        std::cout << "smash> "; // TODO: change this (why?)
+        call.execute();
+        //std::cout << "smash> "; // TODO: change this (why?)
         std::string cmd_line;
         std::getline(std::cin, cmd_line);
-        smash.executeCommand(cmd_line.c_str());
+        smash.executeCommand(cmd_line.c_str(),call);
     }
     return 0;
 }

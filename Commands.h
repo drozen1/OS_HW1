@@ -13,9 +13,14 @@ protected:
     char** args;
     int len;
  public:
-  Command(const char* cmd_line);
+  //Command(const char* cmd_line);
   Command(char** args,int len);
-  virtual ~Command() {};
+  virtual ~Command() {
+      ///to do: check if we free all the elements
+      for(int i=0;i<len;i++){
+          delete args[i];
+      }
+  };
   virtual void execute() = 0;
   //virtual void prepare();
   //virtual void cleanup();
@@ -25,7 +30,7 @@ protected:
 class BuiltInCommand : public Command {
 
  public:
-  BuiltInCommand(const char* cmd_line);
+  //BuiltInCommand(const char* cmd_line);
     BuiltInCommand(char** arg, int len): Command(arg,len){} ;
   virtual ~BuiltInCommand() {};
 };
@@ -33,7 +38,8 @@ class BuiltInCommand : public Command {
 class ExternalCommand : public Command {
  public:
   ExternalCommand(const char* cmd_line);
-  virtual ~ExternalCommand() {}
+  ExternalCommand(char** arg, int len): Command(arg,len){} ;
+    virtual ~ExternalCommand() {}
   void execute() override;
 };
 
@@ -54,12 +60,38 @@ class RedirectionCommand : public Command {
   //void prepare() override;
   //void cleanup() override;
 };
+///chprompt
+class ChpromptCommand : public BuiltInCommand {
+private:
+    std::string str;
+public:
+// TODO: Add your data members public:
+    ChpromptCommand(char **args, int len) : BuiltInCommand(args, len), str("smash> ") {};
+
+    //ChpromptCommand(const char* cmd_line, char** plastPwd);
+    virtual ~ChpromptCommand() {}
+
+    void changTheString(char **args, int len) {
+        if (len == 2) {
+            str = args[1];
+            str += ">";
+        }
+        else if(len==1){
+            str="smash> ";
+        }
+    }
+
+    void execute() override {
+        std::cout << str;
+    }
+};
 
 ///cd
 
 class ChangeDirCommand : public BuiltInCommand {
 // TODO: Add your data members public:
-  ChangeDirCommand(const char* cmd_line, char** plastPwd);
+    ChangeDirCommand(char** args, int len): BuiltInCommand(args, len){};
+  //ChangeDirCommand(const char* cmd_line, char** plastPwd);
   virtual ~ChangeDirCommand() {}
   void execute() override;
 };
@@ -178,7 +210,7 @@ class SmallShell {
 
   SmallShell();
  public:
-  Command *CreateCommand(const char* cmd_line);
+  Command *CreateCommand(const char* cmd_line,ChpromptCommand& call);
   SmallShell(SmallShell const&)      = delete; // disable copy ctor
   void operator=(SmallShell const&)  = delete; // disable = operator
   static SmallShell& getInstance() // make SmallShell singleton
@@ -188,7 +220,7 @@ class SmallShell {
     return instance;
   }
   ~SmallShell();
-  void executeCommand(const char* cmd_line);
+  void executeCommand(const char* cmd_line,ChpromptCommand& call);
   // TODO: add extra methods as needed
 };
 

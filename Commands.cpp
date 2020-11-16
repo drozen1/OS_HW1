@@ -97,7 +97,7 @@ SmallShell::~SmallShell() {
 /**
 * Creates and returns a pointer to Command class which matches the given command line (cmd_line)
 */
-Command * SmallShell::CreateCommand(const char* cmd_line) {
+Command * SmallShell::CreateCommand(const char* cmd_line,ChpromptCommand& call) {
 
     char* args[COMMAND_MAX_ARGS];
     char* copy_cmd_line= const_cast<char *>(cmd_line);
@@ -117,8 +117,15 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
         if(strcmp(name_of_command,key)==0){
             return new ShowPidCommand(args,len);
         }
+        char key1 [] ="chprompt";
+        if(strcmp(name_of_command,key1)==0){
+            call.changTheString(args,len) ;
+            return nullptr;
+            }
+
 
     }
+
 
 	// For example:
 /*
@@ -135,8 +142,8 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
   return nullptr;
 }
 
-void SmallShell::executeCommand(const char *cmd_line) {
-    Command* cmd = CreateCommand(cmd_line);
+void SmallShell::executeCommand(const char *cmd_line,ChpromptCommand& call) {
+    Command* cmd = CreateCommand(cmd_line,call);
     if(cmd!= NULL) {
         cmd->execute();
     }
