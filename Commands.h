@@ -304,10 +304,11 @@ public:
 
     void removeJobById(int jobId);
 
-    JobEntry *getLastJob(int *lastJobId);
+    JobEntry *getLastJob(pid_t  *lastJobPId);
 
-    JobEntry *getLastStoppedJob(int *jobId);
+    JobEntry *getLastStoppedJob( int *jobId);
     // TODO: Add extra methods or modify exisitng ones as needed
+    void fgCommand(int jobId=0);
 };
 
 class JobsCommand : public BuiltInCommand {

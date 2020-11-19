@@ -137,6 +137,15 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
             cd.execute();
             return nullptr;
         }
+        char key5[] = "fg";
+        if (strcmp(name_of_command, key5) == 0) {
+            if (args[1] == NULL) {
+                my_job_list.fgCommand(0);
+            } else {
+                my_job_list.fgCommand(atoi(args[1]));
+            }
+            return nullptr;
+        }
         if (isBackground) {
 
             BackgroundCommand *beckCommand = new BackgroundCommand(args, len, copy_cmd_line);
@@ -254,8 +263,58 @@ void JobsList::removeJobById(int jobId) {
         unsigned int job_id_iter = i->getJob_id();
         if (job_id_iter == jobId) {
             command_vector.erase(i);
+            break;
         }
     }
+}
+
+JobsList::JobEntry *JobsList::getLastJob(pid_t *lastJobPId) {
+    *lastJobPId = command_vector.back().getpid();
+    return &command_vector.back();
+}
+
+///fg
+void JobsList::fgCommand(int jobId) {
+    //whitout jod id
+    if (jobId == 0) {
+        pid_t lastJobPId = -1;
+        pid_t *prtLastJobPId = &lastJobPId;
+
+        if (command_vector.empty() ) {
+            cout << "smash error: fg: jobs list is empty" << "\n";
+            return;
+        } else {
+            JobEntry *take_this_job_to_foreground = getLastJob(prtLastJobPId);
+            ///to do :print what we need like the example
+            if(take_this_job_to_foreground->getIs_running()){
+                ///to do: to fix the bag in the args (print) in commends
+                //cout <<take_this_job_to_foreground->getCommand() <<"& : "<<take_this_job_to_foreground->getpid()<<"\n";
+            }
+            waitpid(*prtLastJobPId, nullptr, 0);
+            removeJobById(command_vector.back().getJob_id());
+            return;
+        }
+    }
+    //find the job how have this job id
+    for (vector<JobEntry>::iterator i = command_vector.begin(); i != command_vector.end(); ++i) {
+        unsigned int job_id_iter = i->getJob_id();
+        if (job_id_iter == jobId) {
+            if (i->getIs_running() == true) {
+                waitpid(i->getpid(), nullptr, 0);
+                command_vector.erase(i);
+                return;
+
+            } else if (i->getIs_running() == false) {
+                kill(i->getpid(), SIGCONT);
+                waitpid(i->getpid(), nullptr, 0);
+                command_vector.erase(i);
+                return;
+            }
+        }
+
+    }
+    //do'nt find this job id
+    cout << "smash error: fg: job-id " << jobId << " does not exist" << "\n";
 }
 
 
@@ -313,11 +372,11 @@ BackgroundCommand::BackgroundCommand(char **arg, int len, char *cmd_line) : Exte
     pid_t p = fork();
     ///to do:to understand hoe to get the time in this function
     //start_time=time();
-    if(p > 0) {
+    if (p > 0) {
         son = p;
 
     }
-    // parent don't waits for child
+        // parent don't waits for child
     else {
         char path[] = "/bin/bash";
         char *args_to_execv[] = {(char *) "bash", (char *) "-c", cmd_line, nullptr};
