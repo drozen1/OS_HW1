@@ -93,7 +93,7 @@ SmallShell::~SmallShell() {
 /**
 * Creates and returns a pointer to Command class which matches the given command line (cmd_line)
 */
-Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call,ChangeDirCommand& cd) {
+Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, ChangeDirCommand &cd) {
     ///do to: we do a new to a command and it will be a memory lip
 
     char *args[COMMAND_MAX_ARGS];
@@ -105,6 +105,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call,C
         //backGround
         _removeBackgroundSign(copy_cmd_line);
         isBackground = true;
+
     }
     const char *const_copy = copy_cmd_line;
     int len = _parseCommandLine(const_copy, args);
@@ -115,7 +116,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call,C
             call.changTheString(args, len);
             return nullptr;
         }
-        if(len==1) {
+        if (len == 1) {
             char key[] = "showpid";
             if (strcmp(name_of_command, key) == 0) {
                 return new ShowPidCommand(args, len);
@@ -132,9 +133,18 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call,C
         }
         char key4[] = "cd";
         if (strcmp(name_of_command, key4) == 0) {
-            cd.Set_Orig_Vals(args,len);
+            cd.Set_Orig_Vals(args, len);
             cd.execute();
             return nullptr;
+        }
+        if (isBackground) {
+
+            BackgroundCommand *beckCommand = new BackgroundCommand(args, len, copy_cmd_line);
+            my_job_list.addJob(beckCommand, beckCommand->getpid(), true);
+            return beckCommand;
+
+        } else {
+            return new ForegroundCommand(args, len, copy_cmd_line);
         }
 
     }
@@ -155,8 +165,8 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call,C
     return nullptr;
 }
 
-void SmallShell::executeCommand(const char *cmd_line, ChpromptCommand &call,ChangeDirCommand& cd) {
-    Command *cmd = CreateCommand(cmd_line, call,cd);
+void SmallShell::executeCommand(const char *cmd_line, ChpromptCommand &call, ChangeDirCommand &cd) {
+    Command *cmd = CreateCommand(cmd_line, call, cd);
     ///to do a delete to all bulit in command because we make a new.
     if (cmd != NULL) {
         cmd->execute();
@@ -183,40 +193,139 @@ Command::Command(char **args, int len) {
 }
 
 JobsList::JobEntry::JobEntry(unsigned int job_id, bool is_running, Command *command, pid_t pid) {
-    this->is_running=is_running;
-    this->job_id=job_id;
-    this->command=command;
-    this->pid=pid;
-    this->start_time=time(NULL);
+    this->is_running = is_running;
+    this->job_id = job_id;
+    this->command = command;
+    this->pid = pid;
+    this->start_time = time(NULL);
 }
 
-void JobsList::addJob(Command *cmd,unsigned int job_id, bool is_running) {
-    if(this->command_vector.size()==0){
-        JobEntry new_job= JobEntry(1,is_running,cmd,job_id);
+void JobsList::addJob(Command *cmd, pid_t pid, bool is_running) {
+    if (this->command_vector.size() == 0) {
+        JobEntry new_job = JobEntry(1, is_running, cmd, pid);
         this->command_vector.push_back(new_job);
-    }else{
-        unsigned int max_JobId= this->command_vector.back().getJob_id();
-        JobEntry new_job= JobEntry(1+max_JobId,is_running,cmd,job_id);
+    } else {
+        unsigned int max_JobId = this->command_vector.back().getJob_id();
+        JobEntry new_job = JobEntry(1 + max_JobId, is_running, cmd, pid);
         this->command_vector.push_back(new_job);
     }
 }
 
 void JobsList::printJobsList() {
-    for(vector<JobEntry>::iterator i= command_vector.begin();
-    i!= command_vector.end(); ++i){
-        unsigned int job_id=i->getJob_id();
-        std::string command_name=i->getCommand();
-        time_t curr_time= time(NULL);
-        double diff_time=difftime(curr_time,i->getTime());
-        pid_t pid= i->getpid();
-        if(i->getIs_running()) {
-            cout <<"["<<job_id<<"]"<< command_name<<"& : "<<pid<<" "<<diff_time<<"\n";
+    for (vector<JobEntry>::iterator i = command_vector.begin();
+         i != command_vector.end(); ++i) {
+        unsigned int job_id = i->getJob_id();
+        std::string command_name = i->getCommand();
+        time_t curr_time = time(NULL);
+        double diff_time = difftime(curr_time, i->getTime());
+        pid_t pid = i->getpid();
+        if (i->getIs_running()) {
+            cout << "[" << job_id << "]" << command_name << "& : " << pid << " " << diff_time << "\n";
             //[1] sleep 100& : 30901 18 secs
-        }else{
-            cout <<"["<<job_id<<"]"<< command_name<<" : "<<pid<<" "<<diff_time<<" "<<"(stopped)"<<"\n";
+        } else {
+            cout << "[" << job_id << "]" << command_name << " : " << pid << " " << diff_time << " " << "(stopped)"
+                 << "\n";
             //[2] sleep 200 : 30902 11 secs (stopped)
         }
     }
 }
 
+void JobsList::removeFinishedJobs() {
+    for (vector<JobEntry>::iterator i = command_vector.begin(); i != command_vector.end(); ++i) {
+        if (waitpid(i.operator*().getpid(), NULL, WNOHANG) > 0) {
+            command_vector.erase(i);
 
+        }
+    }
+}
+
+JobsList::JobEntry *JobsList::getJobById(int jobId) {
+    for (vector<JobEntry>::iterator i = command_vector.begin(); i != command_vector.end(); ++i) {
+        unsigned int job_id_iter = i->getJob_id();
+        if (job_id_iter == jobId) {
+            return &(i.operator*());
+        }
+    }
+    return nullptr;
+}
+
+void JobsList::removeJobById(int jobId) {
+    for (vector<JobEntry>::iterator i = command_vector.begin(); i != command_vector.end(); ++i) {
+        unsigned int job_id_iter = i->getJob_id();
+        if (job_id_iter == jobId) {
+            command_vector.erase(i);
+        }
+    }
+}
+
+
+void ChangeDirCommand::execute() {
+    if (len == 2) {
+        char key[] = "-";
+        char *temp = lastCd;
+        lastCd = getcwd(NULL, 0);
+
+        if (strcmp(args[1], key) == 0) {
+            if (temp != NULL) {
+                chdir(temp);
+            } else {
+                std::cout << "smash error: cd: OLDPWD not set";
+            }
+        } else {
+            chdir(args[1]);
+
+        }
+    }
+    if (len > 2) {
+        std::cout << "smash error: cd: too many arguments" << "\n";
+    }
+
+    ///treat case when SYS CALL fail + case of no arg
+}
+
+
+///to do  fork and wait if foroword
+////to do fork and not wait in background
+
+ForegroundCommand::ForegroundCommand(char **arg, int len, char *cmd_line) : ExternalCommand(arg, len, cmd_line) {
+    pid_t p = fork();
+    ///to do:to understand hoe to get the time in this function
+    //start_time=time();
+    if (p > 0) {
+        son = p;
+        // parent waits for child
+        wait(NULL);
+    } else {
+        const char path[] = "/bin/bash";
+        char *const args_to_execv[] = {(char *) "bash", (char *) "-c", cmd_line, nullptr};
+        execv(path, args_to_execv);
+    }
+
+}
+
+///to do
+void ForegroundCommand::execute() {
+
+}
+
+
+BackgroundCommand::BackgroundCommand(char **arg, int len, char *cmd_line) : ExternalCommand(arg, len, cmd_line) {
+    pid_t p = fork();
+    ///to do:to understand hoe to get the time in this function
+    //start_time=time();
+    if(p > 0) {
+        son = p;
+
+    }
+    // parent don't waits for child
+    else {
+        char path[] = "/bin/bash";
+        char *args_to_execv[] = {(char *) "bash", (char *) "-c", cmd_line, nullptr};
+        execv(path, args_to_execv);
+    }
+}
+
+///to do
+void BackgroundCommand::execute() {
+
+}

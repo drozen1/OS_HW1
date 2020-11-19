@@ -5,6 +5,10 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <string.h>
+#include <algorithm>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <time.h>
 
 #define COMMAND_ARGS_MAX_LENGTH (200)
 #define COMMAND_MAX_ARGS (20)
@@ -17,10 +21,11 @@ protected:
 public:
     //Command(const char* cmd_line);
     Command(char **args, int len);
-    std::string print_command(){
-        std::string ret="";
-        for (int i=0; i<len; i++){
-            ret+=args[i];
+
+    std::string print_command() {
+        std::string ret = "";
+        for (int i = 0; i < len; i++) {
+            ret += args[i];
         }
         return ret;
     }
@@ -50,12 +55,47 @@ public:
 };
 
 class ExternalCommand : public Command {
+protected:
+    char *cmd_line;
 public:
-    ExternalCommand(const char *cmd_line);
+    //ExternalCommand(const char *cmd_line);
 
-    ExternalCommand(char **arg, int len) : Command(arg, len) {};
+    ExternalCommand(char **arg, int len, char *cmd_line) : Command(arg, len), cmd_line(cmd_line) {};
 
-    virtual ~ExternalCommand() {}
+    virtual ~ExternalCommand() {};
+
+    void execute() override {};
+};
+
+class ForegroundCommand : public ExternalCommand {
+    // TODO: Add your data members
+private:
+    pid_t son;
+
+public:
+    ForegroundCommand(char **arg, int len, char *cmd_line);
+
+    virtual ~ForegroundCommand() {};
+
+    void execute() override;
+
+    pid_t getpid() {
+        return son;
+    }
+};
+
+class BackgroundCommand : public ExternalCommand {
+    // TODO: Add your data members
+private:
+    pid_t son;
+public:
+    BackgroundCommand(char **arg, int len, char *cmd_line);
+
+    pid_t getpid() {
+        return son;
+    }
+
+    virtual ~BackgroundCommand() {};
 
     void execute() override;
 };
@@ -168,35 +208,14 @@ public:
     ChangeDirCommand(char **args, int len) : BuiltInCommand(args, len) {};
 
     //ChangeDirCommand(const char* cmd_line, char** plastPwd);
-    void Set_Orig_Vals(char **args, int len){
-        this->args=args;
-        this->len=len;
+    void Set_Orig_Vals(char **args, int len) {
+        this->args = args;
+        this->len = len;
     }
+
     virtual ~ChangeDirCommand() {}
 
-    void execute() override {
-        if(len==2) {
-            char key[] = "-";
-            char *temp = lastCd;
-            lastCd = getcwd(NULL, 0);
-
-            if (strcmp(args[1], key) == 0) {
-                if(temp!=NULL) {
-                    chdir(temp);
-                }else{
-                    std::cout << "smash error: cd: OLDPWD not set";
-                }
-            } else {
-                chdir(args[1]);
-
-            }
-        }
-        if(len>2){
-            std::cout << "smash error: cd: too many arguments"<<"\n";
-        }
-
-        ///treat case when SYS CALL fail + case of no arg
-    }
+    void execute() override;
 };
 
 
@@ -229,8 +248,6 @@ class JobsList {
 
 public:
     class JobEntry {
-
-
 // TODO: Add your data members
         unsigned int job_id;
         bool is_running;
@@ -239,25 +256,30 @@ public:
         pid_t pid;
     public:
         JobEntry(unsigned int job_id, bool is_running, Command *command, pid_t pid);
-        ~JobEntry(){
-            delete command;
-        }
-        unsigned int getJob_id(){
+
+        ~JobEntry() {};
+
+        unsigned int getJob_id() {
             return job_id;
         }
-        pid_t getpid(){
+
+        pid_t getpid() {
             return pid;
         }
-        time_t getTime(){
+
+        time_t getTime() {
             return start_time;
         }
-        bool getIs_running(){
+
+        bool getIs_running() {
             return is_running;
         }
-        void SetIs_running(bool new_state){
-            this->is_running=new_state;
+
+        void SetIs_running(bool new_state) {
+            this->is_running = new_state;
         }
-        std::string getCommand(){
+
+        std::string getCommand() {
             return command->print_command();
         }
     };
@@ -266,11 +288,11 @@ private:
     std::vector<JobEntry> command_vector;
     // TODO: Add your data members
 public:
-    JobsList();
+    JobsList() {};
 
-    ~JobsList();
+    ~JobsList() {};
 
-    void addJob(Command *cmd,unsigned int job_id, bool is_running);
+    void addJob(Command *cmd, pid_t pid, bool is_running);
 
     void printJobsList();
 
@@ -308,37 +330,18 @@ public:
     void execute() override;
 };
 
-class ForegroundCommand : public BuiltInCommand {
-    // TODO: Add your data members
-public:
-    ForegroundCommand(const char *cmd_line, JobsList *jobs);
-
-    virtual ~ForegroundCommand() {}
-
-    void execute() override;
-};
-
-class BackgroundCommand : public BuiltInCommand {
-    // TODO: Add your data members
-public:
-    BackgroundCommand(const char *cmd_line, JobsList *jobs);
-
-    virtual ~BackgroundCommand() {}
-
-    void execute() override;
-};
-
 // TODO: add more classes if needed 
 // maybe ls, timeout ?
 
 class SmallShell {
 private:
     // TODO: Add your data members
+    JobsList my_job_list;
 
     SmallShell();
 
 public:
-    Command *CreateCommand(const char *cmd_line, ChpromptCommand &call,ChangeDirCommand& cd);
+    Command *CreateCommand(const char *cmd_line, ChpromptCommand &call, ChangeDirCommand &cd);
 
     SmallShell(SmallShell const &) = delete; // disable copy ctor
     void operator=(SmallShell const &) = delete; // disable = operator
@@ -351,7 +354,7 @@ public:
 
     ~SmallShell();
 
-    void executeCommand(const char *cmd_line, ChpromptCommand &call,ChangeDirCommand& cd);
+    void executeCommand(const char *cmd_line, ChpromptCommand &call, ChangeDirCommand &cd);
     // TODO: add extra methods as needed
 };
 
