@@ -98,7 +98,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
 
     char *args[COMMAND_MAX_ARGS];
     char *copy_cmd_line = const_cast<char *>(cmd_line);
-
+   // char** check= this->my_job_list.getJobById(1)->getCommand()
     bool isBackground = false;
 
     if (_isBackgroundComamnd(cmd_line)) {
@@ -137,12 +137,44 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
             cd.execute();
             return nullptr;
         }
-        char key5[] = "fg";
+        char key5[] = "jobs";
         if (strcmp(name_of_command, key5) == 0) {
+            this->my_job_list.removeFinishedJobs();
+            this->my_job_list.printJobsList();
+            return nullptr;
+        }
+        char key6[] = "fg";
+        if (strcmp(name_of_command, key6) == 0) {
             if (args[1] == NULL) {
                 my_job_list.fgCommand(0);
             } else {
                 my_job_list.fgCommand(atoi(args[1]));
+            }
+            return nullptr;
+        }
+        char key7[] = "kill";
+        if (strcmp(name_of_command, key7) == 0) {
+            if (len == 3) {
+                ////check format of signum and jobid
+                int signum=args[1][1] - '0';
+                int jobid= args[2][0]- '0';
+                my_job_list.killCommand(jobid,signum);
+            } else {
+                cout<<"smash error: kill: invalid arguments\n";
+            }
+            return nullptr;
+        }
+        char key8[] = "quit";
+        if (strcmp(name_of_command, key8) == 0) {
+            if(len==2) {
+                char *arg1 = args[1];
+                if (strcmp(arg1, reinterpret_cast<const char *>(key7 == 0))) {  ////bug
+                    return nullptr;
+                }
+            }
+            if(len==1){
+               ////what to do?
+                return nullptr;
             }
             return nullptr;
         }
@@ -153,6 +185,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
             return beckCommand;
 
         } else {
+            ///save that there is a process which runing and save his pid
             return new ForegroundCommand(args, len, copy_cmd_line);
         }
 
@@ -197,7 +230,11 @@ void ShowPidCommand::execute() {
 
 Command::Command(char **args, int len) {
     ///to do:to chang args
-    this->args = args;
+    this->args= new char*[len];
+    for(int i=0; i<len; i++){
+        this->args[i]= args[i];
+    }
+    //this->args = args;
     this->len = len;
 }
 
@@ -229,10 +266,10 @@ void JobsList::printJobsList() {
         double diff_time = difftime(curr_time, i->getTime());
         pid_t pid = i->getpid();
         if (i->getIs_running()) {
-            cout << "[" << job_id << "]" << command_name << "& : " << pid << " " << diff_time << "\n";
+            cout << "[" << job_id << "] " << command_name << "& : " << pid << " " << diff_time << "\n";
             //[1] sleep 100& : 30901 18 secs
         } else {
-            cout << "[" << job_id << "]" << command_name << " : " << pid << " " << diff_time << " " << "(stopped)"
+            cout << "[" << job_id << "] " << command_name << " : " << pid << " " << diff_time << " " << "(stopped)"
                  << "\n";
             //[2] sleep 200 : 30902 11 secs (stopped)
         }
@@ -243,9 +280,16 @@ void JobsList::removeFinishedJobs() {
     for (vector<JobEntry>::iterator i = command_vector.begin(); i != command_vector.end(); ++i) {
         if (waitpid(i.operator*().getpid(), NULL, WNOHANG) > 0) {
             command_vector.erase(i);
-
+        }
+        if(i->getJob_id()==0){
+            return;
         }
     }
+}
+
+JobsList::JobEntry *JobsList::getLastJob(pid_t *lastJobPId) {
+    *lastJobPId = command_vector.back().getpid();
+    return &command_vector.back();
 }
 
 JobsList::JobEntry *JobsList::getJobById(int jobId) {
@@ -263,17 +307,9 @@ void JobsList::removeJobById(int jobId) {
         unsigned int job_id_iter = i->getJob_id();
         if (job_id_iter == jobId) {
             command_vector.erase(i);
-            break;
         }
     }
 }
-
-JobsList::JobEntry *JobsList::getLastJob(pid_t *lastJobPId) {
-    *lastJobPId = command_vector.back().getpid();
-    return &command_vector.back();
-}
-
-///fg
 void JobsList::fgCommand(int jobId) {
     //whitout jod id
     if (jobId == 0) {
@@ -317,6 +353,20 @@ void JobsList::fgCommand(int jobId) {
     cout << "smash error: fg: job-id " << jobId << " does not exist" << "\n";
 }
 
+void JobsList::killCommand(int JobId, int signum) {
+    JobEntry* jobEntry=this->getJobById(JobId);
+    if(jobEntry== nullptr){
+        cout<<"smash error: kill: job-id "<<JobId<<" does not exist\n";
+    }else{
+        int ret= kill(jobEntry->getpid(),signum);
+        if(ret==-1){
+            cout<<"ERROR"; ////fix!!
+        }else{
+            cout<<"signal number "<<signum<<" was sent to pid " <<jobEntry->getpid()<<"\n";
+        }
+    }
+}
+
 
 void ChangeDirCommand::execute() {
     if (len == 2) {
@@ -357,7 +407,11 @@ ForegroundCommand::ForegroundCommand(char **arg, int len, char *cmd_line) : Exte
     } else {
         const char path[] = "/bin/bash";
         char *const args_to_execv[] = {(char *) "bash", (char *) "-c", cmd_line, nullptr};
-        execv(path, args_to_execv);
+        int ret=execv(path, args_to_execv);
+        if(ret==-1){
+            perror("smash error: execv failed");
+        }
+        exit(0);
     }
 
 }
@@ -372,15 +426,19 @@ BackgroundCommand::BackgroundCommand(char **arg, int len, char *cmd_line) : Exte
     pid_t p = fork();
     ///to do:to understand hoe to get the time in this function
     //start_time=time();
-    if (p > 0) {
+    if(p > 0) {
         son = p;
 
     }
-        // parent don't waits for child
+    // parent don't waits for child
     else {
         char path[] = "/bin/bash";
         char *args_to_execv[] = {(char *) "bash", (char *) "-c", cmd_line, nullptr};
-        execv(path, args_to_execv);
+        int ret = execv(path, args_to_execv);
+        if(ret==-1){
+            perror("smash error: execv failed");
+        }
+        exit(0);
     }
 }
 

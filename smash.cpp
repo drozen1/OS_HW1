@@ -6,6 +6,9 @@
 #include "signals.h"
 
 int main(int argc, char *argv[]) {
+
+    SmallShell &smash = SmallShell::getInstance();
+    //JobsList jobsList=smash.getJobList().killCommand();
 //    if(signal(SIGTSTP , ctrlZHandler)==SIG_ERR) {
 //        perror("smash error: failed to set ctrl-Z handler");
 //    }
@@ -15,7 +18,7 @@ int main(int argc, char *argv[]) {
 
     //TODO: setup sig alarm handler
     ChpromptCommand call = ChpromptCommand(nullptr, 0);
-    SmallShell &smash = SmallShell::getInstance();
+
 //    char* arg_to_cd[COMMAND_MAX_ARGS];
 //    char command[]="cd";
 //    arg_to_cd[0]=command;

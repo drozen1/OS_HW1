@@ -160,12 +160,9 @@ public:
         num_of_files = scandir(buffer, &fileListTemp, NULL, alphasort);
         free(buffer);
 
-    };
-
+    }
     //LsDirCommand(const char* cmd_line, char** plastPwd);
-
     virtual ~LsDirCommand() {}
-
     void execute() override {
         ///i chang it to start whit 2 because the i[0]=. and i[1]= .. and we dont want to print them.
         ///we need to check if it is allways like this
@@ -217,6 +214,7 @@ public:
 
     void execute() override;
 };
+
 
 
 ///showpid
@@ -306,9 +304,12 @@ public:
 
     JobEntry *getLastJob(pid_t  *lastJobPId);
 
-    JobEntry *getLastStoppedJob( int *jobId);
-    // TODO: Add extra methods or modify exisitng ones as needed
     void fgCommand(int jobId=0);
+
+    void killCommand(int JobId, int signum);
+
+    JobEntry *getLastStoppedJob(int *jobId);
+    // TODO: Add extra methods or modify exisitng ones as needed
 };
 
 class JobsCommand : public BuiltInCommand {

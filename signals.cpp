@@ -5,9 +5,10 @@
 
 using namespace std;
 
-void ctrlZHandler(int sig_num) {
-    // TODO: Add your implementation
-}
+//void ctrlZHandler(int sig_num) {
+//    SmallShell &smash = SmallShell::getInstance();
+//    smash.getJobList().killCommand()
+//}
 
 void ctrlCHandler(int sig_num) {
     // TODO: Add your implementation
