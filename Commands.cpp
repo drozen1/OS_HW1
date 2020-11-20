@@ -98,7 +98,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
 
     char *args[COMMAND_MAX_ARGS];
     char *copy_cmd_line = const_cast<char *>(cmd_line);
-   // char** check= this->my_job_list.getJobById(1)->getCommand()
+    // char** check= this->my_job_list.getJobById(1)->getCommand()
     bool isBackground = false;
 
     if (_isBackgroundComamnd(cmd_line)) {
@@ -145,10 +145,39 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
         }
         char key6[] = "fg";
         if (strcmp(name_of_command, key6) == 0) {
+            if (len > 2) {
+                cout << "smash error: fg: invalid arguments\n";
+                return nullptr;
+            }
             if (args[1] == NULL) {
                 my_job_list.fgCommand(0);
             } else {
-                my_job_list.fgCommand(atoi(args[1]));
+                if (atoi(args[1]) > 0) {
+                    my_job_list.fgCommand(atoi(args[1]));
+                } else {
+                    ///chack if to return error because we get job id<0 and not valid.
+
+                    cout << "smash error: fg: job-id " << atoi(args[1]) << " does not exist\n";
+                }
+            }
+            return nullptr;
+        }
+        char key9[] = "bg";
+        if (strcmp(name_of_command, key9) == 0) {
+            if (len > 2) {
+                cout << "smash error: bg: invalid arguments\n";
+                return nullptr;
+            }
+            if (args[1] == NULL) {
+                my_job_list.bgCommand(0);
+            } else {
+                if (atoi(args[1]) > 0) {
+                    my_job_list.bgCommand(atoi(args[1]));
+                } else {
+                    ///chack if to return error because we get job id<0 and not valid.
+
+                    cout << "smash error: fg: job-id " << atoi(args[1]) << " does not exist\n";
+                }
             }
             return nullptr;
         }
@@ -156,24 +185,26 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
         if (strcmp(name_of_command, key7) == 0) {
             if (len == 3) {
                 ////check format of signum and jobid
-                int signum=args[1][1] - '0';
-                int jobid= args[2][0]- '0';
-                my_job_list.killCommand(jobid,signum);
+                char numOfSignal[2] = {args[1][1], args[1][2]};
+                int signum = atoi(numOfSignal);
+                //int signum = args[1][1] - '0';
+                int job_id = args[2][0] - '0';
+                my_job_list.killCommand(job_id, signum);
             } else {
-                cout<<"smash error: kill: invalid arguments\n";
+                cout << "smash error: kill: invalid arguments\n";
             }
             return nullptr;
         }
         char key8[] = "quit";
         if (strcmp(name_of_command, key8) == 0) {
-            if(len==2) {
+            if (len == 2) {
                 char *arg1 = args[1];
-                if (strcmp(arg1, reinterpret_cast<const char *>(key7 == 0))) {  ////bug
+                if (strcmp(arg1, key7) == 0) {  ////linoy fix the bug
                     return nullptr;
                 }
             }
-            if(len==1){
-               ////what to do?
+            if (len == 1) {
+                ////what to do?
                 return nullptr;
             }
             return nullptr;
@@ -230,9 +261,9 @@ void ShowPidCommand::execute() {
 
 Command::Command(char **args, int len) {
     ///to do:to chang args
-    this->args= new char*[len];
-    for(int i=0; i<len; i++){
-        this->args[i]= args[i];
+    this->args = new char *[len];
+    for (int i = 0; i < len; i++) {
+        this->args[i] = args[i];
     }
     //this->args = args;
     this->len = len;
@@ -258,6 +289,7 @@ void JobsList::addJob(Command *cmd, pid_t pid, bool is_running) {
 }
 
 void JobsList::printJobsList() {
+    removeFinishedJobs();
     for (vector<JobEntry>::iterator i = command_vector.begin();
          i != command_vector.end(); ++i) {
         unsigned int job_id = i->getJob_id();
@@ -281,7 +313,8 @@ void JobsList::removeFinishedJobs() {
         if (waitpid(i.operator*().getpid(), NULL, WNOHANG) > 0) {
             command_vector.erase(i);
         }
-        if(i->getJob_id()==0){
+        ///way wh need this????
+        if (i->getJob_id() == 0) {
             return;
         }
     }
@@ -307,24 +340,29 @@ void JobsList::removeJobById(int jobId) {
         unsigned int job_id_iter = i->getJob_id();
         if (job_id_iter == jobId) {
             command_vector.erase(i);
+            return;
         }
     }
 }
+
 void JobsList::fgCommand(int jobId) {
     //whitout jod id
     if (jobId == 0) {
         pid_t lastJobPId = -1;
         pid_t *prtLastJobPId = &lastJobPId;
 
-        if (command_vector.empty() ) {
+        if (command_vector.empty()) {
             cout << "smash error: fg: jobs list is empty" << "\n";
             return;
         } else {
             JobEntry *take_this_job_to_foreground = getLastJob(prtLastJobPId);
             ///to do :print what we need like the example
-            if(take_this_job_to_foreground->getIs_running()){
-                ///to do: to fix the bag in the args (print) in commends
-                //cout <<take_this_job_to_foreground->getCommand() <<"& : "<<take_this_job_to_foreground->getpid()<<"\n";
+            if (take_this_job_to_foreground->getIs_running()) {
+                cout << take_this_job_to_foreground->getCommand() << "& : " << take_this_job_to_foreground->getpid()
+                     << "\n";
+            } else {
+                cout << take_this_job_to_foreground->getCommand() << ": " << take_this_job_to_foreground->getpid()
+                     << "\n";
             }
             waitpid(*prtLastJobPId, nullptr, 0);
             removeJobById(command_vector.back().getJob_id());
@@ -335,12 +373,14 @@ void JobsList::fgCommand(int jobId) {
     for (vector<JobEntry>::iterator i = command_vector.begin(); i != command_vector.end(); ++i) {
         unsigned int job_id_iter = i->getJob_id();
         if (job_id_iter == jobId) {
-            if (i->getIs_running() == true) {
+            if (i->getIs_running()) {
+                cout << i->getCommand() << "& : " << i->getpid() << "\n";
                 waitpid(i->getpid(), nullptr, 0);
                 command_vector.erase(i);
                 return;
 
             } else if (i->getIs_running() == false) {
+                cout << i->getCommand() << " : " << i->getpid() << "\n";
                 kill(i->getpid(), SIGCONT);
                 waitpid(i->getpid(), nullptr, 0);
                 command_vector.erase(i);
@@ -354,16 +394,70 @@ void JobsList::fgCommand(int jobId) {
 }
 
 void JobsList::killCommand(int JobId, int signum) {
-    JobEntry* jobEntry=this->getJobById(JobId);
-    if(jobEntry== nullptr){
-        cout<<"smash error: kill: job-id "<<JobId<<" does not exist\n";
-    }else{
-        int ret= kill(jobEntry->getpid(),signum);
-        if(ret==-1){
-            cout<<"ERROR"; ////fix!!
-        }else{
-            cout<<"signal number "<<signum<<" was sent to pid " <<jobEntry->getpid()<<"\n";
+    JobEntry *jobEntry = this->getJobById(JobId);
+    if (jobEntry == nullptr) {
+        cout << "smash error: kill: job-id " << JobId << " does not exist\n";
+    } else {
+        int ret = kill(jobEntry->getpid(), signum);
+        if (ret == -1) {
+            cout << "ERROR"; ////fix!!
+        } else {
+            ///case is stop signal
+            if (signum == 19) {
+                jobEntry->SetIs_running(false);
+            }
+            cout << "signal number " << signum << " was sent to pid " << jobEntry->getpid() << "\n";
         }
+    }
+}
+
+JobsList::JobEntry *JobsList::getLastStoppedJob(int *jobId) {
+    for (int i = command_vector.size() - 1; i >= 0; --i) {
+        bool is_running_iter = command_vector[i].getIs_running();
+        if (is_running_iter == false) {
+            *jobId = command_vector[i].getJob_id();
+            return &command_vector[i];
+        }
+    }
+
+    return nullptr;
+}
+
+void JobsList::bgCommand(int jobId) {
+//whitout jod id
+    if (jobId == 0) {
+        int jobIdOfLastJobThatStop = -1;
+        int *prtJobIdOfLastJobThatStop = &jobIdOfLastJobThatStop;
+        JobEntry *jobEn = getLastStoppedJob(prtJobIdOfLastJobThatStop);
+        //not stop job os found
+        if (jobEn == nullptr) {
+            cout << "smash error: bg: there is no stopped jobs to resume\n";
+            return;
+        } else {
+            //last stop job is found
+            cout << jobEn->getCommand() << ": " << jobEn->getpid() << "\n";
+            kill(jobEn->getpid(), SIGCONT);
+            jobEn->SetIs_running(true);
+            return;
+        }
+    } else {
+        //find the job how have this job id
+        for (vector<JobEntry>::iterator i = command_vector.begin(); i != command_vector.end(); ++i) {
+            unsigned int job_id_iter = i->getJob_id();
+            if (job_id_iter == jobId) {
+                if (i->getIs_running()) {
+                    cout << "smash error: bg: job-id " << jobId << " is already running in the background\n";
+                    return;
+                } else {
+                    cout << i->getCommand() << " : " << i->getpid() << "\n";
+                    kill(i->getpid(), SIGCONT);
+                    i->SetIs_running(true);
+                    return;
+                }
+            }
+        }
+        cout << "smash error: bg: job-id " << jobId << " does not exist\n";
+
     }
 }
 
@@ -396,7 +490,8 @@ void ChangeDirCommand::execute() {
 ///to do  fork and wait if foroword
 ////to do fork and not wait in background
 
-ForegroundCommand::ForegroundCommand(char **arg, int len, char *cmd_line) : ExternalCommand(arg, len, cmd_line) {
+ForegroundCommand::ForegroundCommand(char **arg, int
+len, char *cmd_line) : ExternalCommand(arg, len, cmd_line) {
     pid_t p = fork();
     ///to do:to understand hoe to get the time in this function
     //start_time=time();
@@ -407,8 +502,8 @@ ForegroundCommand::ForegroundCommand(char **arg, int len, char *cmd_line) : Exte
     } else {
         const char path[] = "/bin/bash";
         char *const args_to_execv[] = {(char *) "bash", (char *) "-c", cmd_line, nullptr};
-        int ret=execv(path, args_to_execv);
-        if(ret==-1){
+        int ret = execv(path, args_to_execv);
+        if (ret == -1) {
             perror("smash error: execv failed");
         }
         exit(0);
@@ -422,20 +517,21 @@ void ForegroundCommand::execute() {
 }
 
 
-BackgroundCommand::BackgroundCommand(char **arg, int len, char *cmd_line) : ExternalCommand(arg, len, cmd_line) {
+BackgroundCommand::BackgroundCommand(char **arg, int
+len, char *cmd_line) : ExternalCommand(arg, len, cmd_line) {
     pid_t p = fork();
     ///to do:to understand hoe to get the time in this function
     //start_time=time();
-    if(p > 0) {
+    if (p > 0) {
         son = p;
 
     }
-    // parent don't waits for child
+        // parent don't waits for child
     else {
         char path[] = "/bin/bash";
         char *args_to_execv[] = {(char *) "bash", (char *) "-c", cmd_line, nullptr};
         int ret = execv(path, args_to_execv);
-        if(ret==-1){
+        if (ret == -1) {
             perror("smash error: execv failed");
         }
         exit(0);

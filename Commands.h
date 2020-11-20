@@ -306,6 +306,8 @@ public:
 
     void fgCommand(int jobId=0);
 
+    void bgCommand(int jobId=0);
+
     void killCommand(int JobId, int signum);
 
     JobEntry *getLastStoppedJob(int *jobId);
