@@ -250,7 +250,8 @@ public:
         unsigned int job_id;
         bool is_running;
         Command *command;
-        time_t start_time;
+        time_t last_start_time;
+        double running_time;
         pid_t pid;
     public:
         JobEntry(unsigned int job_id, bool is_running, Command *command, pid_t pid);
@@ -265,8 +266,18 @@ public:
             return pid;
         }
 
-        time_t getTime() {
-            return start_time;
+        time_t getLast_start_time() {
+            return last_start_time;
+        }
+        void setLast_start_time(time_t last_time) {
+            this->last_start_time= last_time;
+        }
+        double getRunning_time() {
+            return running_time;
+        }
+
+        void set_running_time(double running_time) {
+            this->running_time=running_time;
         }
 
         bool getIs_running() {

@@ -139,8 +139,9 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
         }
         char key5[] = "jobs";
         if (strcmp(name_of_command, key5) == 0) {
-            this->my_job_list.removeFinishedJobs();
-            this->my_job_list.printJobsList();
+            if (len==1) {
+                this->my_job_list.printJobsList();
+            }
             return nullptr;
         }
         char key6[] = "fg";
@@ -274,7 +275,8 @@ JobsList::JobEntry::JobEntry(unsigned int job_id, bool is_running, Command *comm
     this->job_id = job_id;
     this->command = command;
     this->pid = pid;
-    this->start_time = time(NULL);
+    this->last_start_time = time(NULL);
+    this->running_time=0;
 }
 
 void JobsList::addJob(Command *cmd, pid_t pid, bool is_running) {
@@ -295,15 +297,17 @@ void JobsList::printJobsList() {
         unsigned int job_id = i->getJob_id();
         std::string command_name = i->getCommand();
         time_t curr_time = time(NULL);
-        double diff_time = difftime(curr_time, i->getTime());
+        double diff_time = difftime(curr_time, i->getLast_start_time())+i->getRunning_time();
+        double diff_time_stopped = i->getRunning_time();
         pid_t pid = i->getpid();
         if (i->getIs_running()) {
             cout << "[" << job_id << "] " << command_name << "& : " << pid << " " << diff_time << "\n";
             //[1] sleep 100& : 30901 18 secs
         } else {
-            cout << "[" << job_id << "] " << command_name << " : " << pid << " " << diff_time << " " << "(stopped)"
+            cout << "[" << job_id << "] " << command_name << " : " << pid << " " << diff_time_stopped << " " << "(stopped)"
                  << "\n";
             //[2] sleep 200 : 30902 11 secs (stopped)
+
         }
     }
 }
@@ -403,8 +407,15 @@ void JobsList::killCommand(int JobId, int signum) {
             cout << "ERROR"; ////fix!!
         } else {
             ///case is stop signal
-            if (signum == 19) {
+            if (signum == 17) {
+                time_t curr_time=time(NULL);
                 jobEntry->SetIs_running(false);
+                jobEntry->set_running_time(jobEntry->getRunning_time()+(difftime(curr_time,jobEntry->getLast_start_time())));
+            }
+            if (signum == 18) {
+                time_t curr_time=time(NULL);
+                jobEntry->SetIs_running(true);
+                jobEntry->setLast_start_time(curr_time);
             }
             cout << "signal number " << signum << " was sent to pid " << jobEntry->getpid() << "\n";
         }
@@ -500,13 +511,16 @@ len, char *cmd_line) : ExternalCommand(arg, len, cmd_line) {
         // parent waits for child
         wait(NULL);
     } else {
-        const char path[] = "/bin/bash";
-        char *const args_to_execv[] = {(char *) "bash", (char *) "-c", cmd_line, nullptr};
-        int ret = execv(path, args_to_execv);
-        if (ret == -1) {
-            perror("smash error: execv failed");
+        if(p==0) {
+            setpgrp();
+            const char path[] = "/bin/bash";
+            char *const args_to_execv[] = {(char *) "bash", (char *) "-c", cmd_line, nullptr};
+            int ret = execv(path, args_to_execv);
+            if (ret == -1) {
+                perror("smash error: execv failed");
+            }
+            exit(0);
         }
-        exit(0);
     }
 
 }
@@ -528,13 +542,16 @@ len, char *cmd_line) : ExternalCommand(arg, len, cmd_line) {
     }
         // parent don't waits for child
     else {
-        char path[] = "/bin/bash";
-        char *args_to_execv[] = {(char *) "bash", (char *) "-c", cmd_line, nullptr};
-        int ret = execv(path, args_to_execv);
-        if (ret == -1) {
-            perror("smash error: execv failed");
+        if(p==0) {
+            setpgrp();
+            char path[] = "/bin/bash";
+            char *args_to_execv[] = {(char *) "bash", (char *) "-c", cmd_line, nullptr};
+            int ret = execv(path, args_to_execv);
+            if (ret == -1) {
+                perror("smash error: execv failed");
+            }
+            exit(0);
         }
-        exit(0);
     }
 }
 
