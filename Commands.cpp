@@ -352,7 +352,6 @@ void JobsList::removeJobById(int jobId) {
         }
     }
 }
-
 void JobsList::fgCommand(int jobId) {
     //whitout jod id
     if (jobId == 0) {
@@ -364,11 +363,15 @@ void JobsList::fgCommand(int jobId) {
             return;
         } else {
             JobEntry *take_this_job_to_foreground = getLastJob(prtLastJobPId);
-            ///to do :print what we need like the example
+            //the last job is BackgroundCommand
             if (take_this_job_to_foreground->getIs_running()) {
                 cout << take_this_job_to_foreground->getCommand() << "& : " << take_this_job_to_foreground->getpid()
                      << "\n";
             } else {
+                //the last job is foregroundCommand
+                time_t curr_time=time(NULL);
+                take_this_job_to_foreground->SetIs_running(true);
+                take_this_job_to_foreground->setLast_start_time(curr_time);
                 cout << take_this_job_to_foreground->getCommand() << ": " << take_this_job_to_foreground->getpid()
                      << "\n";
             }
@@ -387,9 +390,14 @@ void JobsList::fgCommand(int jobId) {
                 command_vector.erase(i);
                 return;
 
-            } else if (i->getIs_running() == false) {
+            }
+                //the  job is foregroundCommand
+            else if (i->getIs_running() == false) {
                 cout << i->getCommand() << " : " << i->getpid() << "\n";
                 kill(i->getpid(), SIGCONT);
+                time_t curr_time=time(NULL);
+                i->SetIs_running(true);
+                i->setLast_start_time(curr_time);
                 waitpid(i->getpid(), nullptr, 0);
                 command_vector.erase(i);
                 return;
@@ -400,6 +408,53 @@ void JobsList::fgCommand(int jobId) {
     //do'nt find this job id
     cout << "smash error: fg: job-id " << jobId << " does not exist" << "\n";
 }
+//void JobsList::fgCommand(int jobId) {
+//    //whitout jod id
+//    if (jobId == 0) {
+//        pid_t lastJobPId = -1;
+//        pid_t *prtLastJobPId = &lastJobPId;
+//
+//        if (command_vector.empty()) {
+//            cout << "smash error: fg: jobs list is empty" << "\n";
+//            return;
+//        } else {
+//            JobEntry *take_this_job_to_foreground = getLastJob(prtLastJobPId);
+//            ///to do :print what we need like the example
+//            if (take_this_job_to_foreground->getIs_running()) {
+//                cout << take_this_job_to_foreground->getCommand() << "& : " << take_this_job_to_foreground->getpid()
+//                     << "\n";
+//            } else {
+//                cout << take_this_job_to_foreground->getCommand() << ": " << take_this_job_to_foreground->getpid()
+//                     << "\n";
+//            }
+//            waitpid(*prtLastJobPId, nullptr, 0);
+//            removeJobById(command_vector.back().getJob_id());
+//            return;
+//        }
+//    }
+//    //find the job how have this job id
+//    for (vector<JobEntry>::iterator i = command_vector.begin(); i != command_vector.end(); ++i) {
+//        unsigned int job_id_iter = i->getJob_id();
+//        if (job_id_iter == jobId) {
+//            if (i->getIs_running()) {
+//                cout << i->getCommand() << "& : " << i->getpid() << "\n";
+//                waitpid(i->getpid(), nullptr, 0);
+//                command_vector.erase(i);
+//                return;
+//
+//            } else if (i->getIs_running() == false) {
+//                cout << i->getCommand() << " : " << i->getpid() << "\n";
+//                kill(i->getpid(), SIGCONT);
+//                waitpid(i->getpid(), nullptr, 0);
+//                command_vector.erase(i);
+//                return;
+//            }
+//        }
+//
+//    }
+//    //do'nt find this job id
+//    cout << "smash error: fg: job-id " << jobId << " does not exist" << "\n";
+//}
 
 void JobsList::killCommand(int JobId, int signum) {
     JobEntry *jobEntry = this->getJobById(JobId);
@@ -411,7 +466,7 @@ void JobsList::killCommand(int JobId, int signum) {
             cout << "ERROR"; ////fix!!
         } else {
             ///case is stop signal
-            if (signum == 17) {
+            if (signum == 19) {
                 time_t curr_time=time(NULL);
                 jobEntry->SetIs_running(false);
                 jobEntry->set_running_time(jobEntry->getRunning_time()+(difftime(curr_time,jobEntry->getLast_start_time())));
@@ -437,7 +492,6 @@ JobsList::JobEntry *JobsList::getLastStoppedJob(int *jobId) {
 
     return nullptr;
 }
-
 void JobsList::bgCommand(int jobId) {
 //whitout jod id
     if (jobId == 0) {
@@ -452,7 +506,10 @@ void JobsList::bgCommand(int jobId) {
             //last stop job is found
             cout << jobEn->getCommand() << ": " << jobEn->getpid() << "\n";
             kill(jobEn->getpid(), SIGCONT);
+            //the last job is foregroundCommand
+            time_t curr_time=time(NULL);
             jobEn->SetIs_running(true);
+            jobEn->setLast_start_time(curr_time);
             return;
         }
     } else {
@@ -466,7 +523,9 @@ void JobsList::bgCommand(int jobId) {
                 } else {
                     cout << i->getCommand() << " : " << i->getpid() << "\n";
                     kill(i->getpid(), SIGCONT);
+                    time_t curr_time=time(NULL);
                     i->SetIs_running(true);
+                    i->setLast_start_time(curr_time);
                     return;
                 }
             }
@@ -475,6 +534,43 @@ void JobsList::bgCommand(int jobId) {
 
     }
 }
+//void JobsList::bgCommand(int jobId) {
+////whitout jod id
+//    if (jobId == 0) {
+//        int jobIdOfLastJobThatStop = -1;
+//        int *prtJobIdOfLastJobThatStop = &jobIdOfLastJobThatStop;
+//        JobEntry *jobEn = getLastStoppedJob(prtJobIdOfLastJobThatStop);
+//        //not stop job os found
+//        if (jobEn == nullptr) {
+//            cout << "smash error: bg: there is no stopped jobs to resume\n";
+//            return;
+//        } else {
+//            //last stop job is found
+//            cout << jobEn->getCommand() << ": " << jobEn->getpid() << "\n";
+//            kill(jobEn->getpid(), SIGCONT);
+//            jobEn->SetIs_running(true);
+//            return;
+//        }
+//    } else {
+//        //find the job how have this job id
+//        for (vector<JobEntry>::iterator i = command_vector.begin(); i != command_vector.end(); ++i) {
+//            unsigned int job_id_iter = i->getJob_id();
+//            if (job_id_iter == jobId) {
+//                if (i->getIs_running()) {
+//                    cout << "smash error: bg: job-id " << jobId << " is already running in the background\n";
+//                    return;
+//                } else {
+//                    cout << i->getCommand() << " : " << i->getpid() << "\n";
+//                    kill(i->getpid(), SIGCONT);
+//                    i->SetIs_running(true);
+//                    return;
+//                }
+//            }
+//        }
+//        cout << "smash error: bg: job-id " << jobId << " does not exist\n";
+//
+//    }
+//}
 
 
 void ChangeDirCommand::execute() {
