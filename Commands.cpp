@@ -107,6 +107,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
         isBackground = true;
 
     }
+    there_is_a_process_running_in_the_front = false;
     const char *const_copy = copy_cmd_line;
     int len = _parseCommandLine(const_copy, args);
     char *name_of_command = args[0];
@@ -218,7 +219,10 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
 
         } else {
             ///save that there is a process which runing and save his pid
-            return new ForegroundCommand(args, len, copy_cmd_line);
+            there_is_a_process_running_in_the_front=true;
+            ForegroundCommand* ret= new ForegroundCommand(args, len, copy_cmd_line);
+            this->front_cmd=ret;
+            return ret;
         }
 
     }

@@ -352,7 +352,8 @@ class SmallShell {
 private:
     // TODO: Add your data members
     JobsList my_job_list;
-
+    bool there_is_a_process_running_in_the_front;
+    ForegroundCommand* front_cmd;
     SmallShell();
 
 public:
