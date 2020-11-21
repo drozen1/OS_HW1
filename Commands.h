@@ -311,6 +311,8 @@ public:
 
     JobEntry *getJobById(int jobId);
 
+    JobEntry *getJobByPid(pid_t Pid);
+
     void removeJobById(int jobId);
 
     JobEntry *getLastJob(pid_t  *lastJobPId);
@@ -358,7 +360,13 @@ private:
 
 public:
     Command *CreateCommand(const char *cmd_line, ChpromptCommand &call, ChangeDirCommand &cd);
-
+    JobsList getJobList(){
+        return this->my_job_list;
+    }
+    bool getBool(){
+        return this->there_is_a_process_running_in_the_front;
+    }
+    ForegroundCommand* getFrondCmd(){ return this->front_cmd;}
     SmallShell(SmallShell const &) = delete; // disable copy ctor
     void operator=(SmallShell const &) = delete; // disable = operator
     static SmallShell &getInstance() // make SmallShell singleton

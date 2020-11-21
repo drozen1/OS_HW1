@@ -369,6 +369,7 @@ void JobsList::fgCommand(int jobId) {
                      << "\n";
             } else {
                 //the last job is foregroundCommand
+                kill (take_this_job_to_foreground->getpid(),SIGCONT);
                 time_t curr_time=time(NULL);
                 take_this_job_to_foreground->SetIs_running(true);
                 take_this_job_to_foreground->setLast_start_time(curr_time);
@@ -533,6 +534,16 @@ void JobsList::bgCommand(int jobId) {
         cout << "smash error: bg: job-id " << jobId << " does not exist\n";
 
     }
+}
+
+JobsList::JobEntry *JobsList::getJobByPid(pid_t Pid) {
+    for (vector<JobEntry>::iterator i = command_vector.begin(); i != command_vector.end(); ++i) {
+        pid_t job_id_iter = i->getpid();
+        if (job_id_iter == Pid) {
+            return &(i.operator*());
+        }
+    }
+        return nullptr;
 }
 //void JobsList::bgCommand(int jobId) {
 ////whitout jod id
