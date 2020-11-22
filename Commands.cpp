@@ -214,7 +214,6 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                 }
             }
             if (len == 1) {
-                this->my_job_list.killAllJobs();
                 exit(0);
                 return nullptr;
 
