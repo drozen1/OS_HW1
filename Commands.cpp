@@ -209,14 +209,19 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                 if (strcmp(arg1, key7) == 0) {
                     cout<<"smash: sending SIGKILL signal to "<<this->my_job_list.getVector().size()<<" jobs\n";
                     this->my_job_list.killAllJobs();
+                    exit(0);
                     return nullptr;
                 }
             }
             if (len == 1) {
                 this->my_job_list.killAllJobs();
+                exit(0);
                 return nullptr;
+
             }
+            exit(0);
             return nullptr;
+
         }
         if (isBackground) {
 
