@@ -29,7 +29,8 @@ public:
         }
         return ret;
     }
-
+    char** get_args(){return args;}
+    int get_len(){return len;}
     virtual ~Command() {
         ///to do: check if we free all the elements
         for (int i = 0; i < len; i++) {
@@ -59,14 +60,15 @@ protected:
     char *cmd_line;
 public:
     //ExternalCommand(const char *cmd_line);
-
+    char* get_cmd_line(){return this->cmd_line;}
     ExternalCommand(char **arg, int len, char *cmd_line) : Command(arg, len), cmd_line(cmd_line) {};
 
     virtual ~ExternalCommand() {};
 
     void execute() override {};
 };
-
+class JobsList;
+class JobEntry;
 class ForegroundCommand : public ExternalCommand {
     // TODO: Add your data members
 private:
@@ -74,7 +76,7 @@ private:
 
 public:
     ForegroundCommand(char **arg, int len, char *cmd_line);
-
+    //ForegroundCommand(args, len, copy_cmd_line, &this->external_front_cmd, &this->front_cmd_pid);
     virtual ~ForegroundCommand() {};
 
     void execute() override;
@@ -230,7 +232,7 @@ public:
     void execute() override;
 };
 
-class JobsList;
+
 
 ///quit
 class QuitCommand : public BuiltInCommand {
@@ -241,57 +243,57 @@ class QuitCommand : public BuiltInCommand {
 
     void execute() override;
 };
+class JobEntry {
+// TODO: Add your data members
+    unsigned int job_id;
+    bool is_running;
+    Command *command;
+    time_t last_start_time;
+    double running_time;
+    pid_t pid;
+public:
+    JobEntry(unsigned int job_id, bool is_running, Command *command, pid_t pid,double running_time);
 
+    ~JobEntry() {};
+
+    unsigned int getJob_id() {
+        return job_id;
+    }
+
+    pid_t getpid() {
+        return pid;
+    }
+
+    time_t getLast_start_time() {
+        return last_start_time;
+    }
+    void setLast_start_time(time_t last_time) {
+        this->last_start_time= last_time;
+    }
+    double getRunning_time() {
+        return running_time;
+    }
+
+    void set_running_time(double running_time) {
+        this->running_time=running_time;
+    }
+
+    bool getIs_running() {
+        return is_running;
+    }
+
+    void SetIs_running(bool new_state) {
+        this->is_running = new_state;
+    }
+
+    std::string getCommand() {
+        return command->print_command();
+    }
+};
 class JobsList {
 
 public:
-    class JobEntry {
-// TODO: Add your data members
-        unsigned int job_id;
-        bool is_running;
-        Command *command;
-        time_t last_start_time;
-        double running_time;
-        pid_t pid;
-    public:
-        JobEntry(unsigned int job_id, bool is_running, Command *command, pid_t pid);
 
-        ~JobEntry() {};
-
-        unsigned int getJob_id() {
-            return job_id;
-        }
-
-        pid_t getpid() {
-            return pid;
-        }
-
-        time_t getLast_start_time() {
-            return last_start_time;
-        }
-        void setLast_start_time(time_t last_time) {
-            this->last_start_time= last_time;
-        }
-        double getRunning_time() {
-            return running_time;
-        }
-
-        void set_running_time(double running_time) {
-            this->running_time=running_time;
-        }
-
-        bool getIs_running() {
-            return is_running;
-        }
-
-        void SetIs_running(bool new_state) {
-            this->is_running = new_state;
-        }
-
-        std::string getCommand() {
-            return command->print_command();
-        }
-    };
 
 private:
     std::vector<JobEntry> command_vector;
@@ -317,7 +319,7 @@ public:
 
     JobEntry *getLastJob(pid_t  *lastJobPId);
 
-    void fgCommand(int jobId=0);
+    void fgCommand(int jobId=0,pid_t* pid_to_update=0);
 
     void bgCommand(int jobId=0);
 
@@ -356,12 +358,26 @@ private:
     JobsList my_job_list;
     bool there_is_a_process_running_in_the_front;
     ForegroundCommand* front_cmd;
+    pid_t front_cmd_pid;
+    ExternalCommand* external_front_cmd;
     SmallShell();
 
 public:
     Command *CreateCommand(const char *cmd_line, ChpromptCommand &call, ChangeDirCommand &cd);
-    JobsList getJobList(){
+    JobsList& getJobList(){
         return this->my_job_list;
+    }
+    pid_t getFront_cmd_pid(){
+        return front_cmd_pid;
+    }
+    void setFront_cmd_pid(pid_t new_pid){
+        this->front_cmd_pid=new_pid;
+    }
+    ExternalCommand* getCommand_front_cmd(){
+        return external_front_cmd;
+    }
+    void setCommand_front_cmd(ExternalCommand* new_cmd){
+        this->external_front_cmd=new_cmd;
     }
     bool getBool(){
         return this->there_is_a_process_running_in_the_front;

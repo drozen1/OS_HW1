@@ -2,25 +2,21 @@
 #include <signal.h>
 #include "signals.h"
 #include "Commands.h"
+#include <sys/signalfd.h>
 
 using namespace std;
 
 void ctrlZHandler(int sig_num) {
     SmallShell &smash = SmallShell::getInstance();
-    JobsList jobsList= smash.getJobList();
     bool is_there_a_process=smash.getBool();
-    ForegroundCommand* frontcmd=smash.getFrondCmd();
+    pid_t pid_to_stop=smash.getFront_cmd_pid();
     cout<<"smash: got ctrl-Z"<<"\n";
     if(is_there_a_process){
-        pid_t curr_pid = frontcmd->getpid();
-        JobsList::JobEntry* job_entry=jobsList.getJobByPid(curr_pid);
-        if(job_entry== nullptr) {
-            jobsList.addJob(frontcmd, frontcmd->getpid(), false);
-            job_entry=jobsList.getJobByPid(curr_pid);
-        }
-
-            jobsList.killCommand(job_entry->getJob_id(), SIGSTOP);
+            kill( pid_to_stop, SIGSTOP);
+            cout<<"smash: process "<<pid_to_stop<<" was stopped"<<"\n";
     }
+
+    return;
 }
 ///case: job is already in the vector
 ////            job_entry->SetIs_running(false);
@@ -32,7 +28,14 @@ void ctrlZHandler(int sig_num) {
 ///case job not in the list
 
 void ctrlCHandler(int sig_num) {
-    // TODO: Add your implementation
+    SmallShell &smash = SmallShell::getInstance();
+    bool is_there_a_process=smash.getBool();
+    pid_t pid_to_stop=smash.getFront_cmd_pid();
+    cout<<"smash: got ctrl-C"<<"\n";
+    if(is_there_a_process){
+        kill( pid_to_stop, SIGINT);
+        cout<<"smash: process "<<pid_to_stop<<" was stopped"<<"\n";
+    }
 }
 
 void alarmHandler(int sig_num) {

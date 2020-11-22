@@ -140,7 +140,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
         }
         char key5[] = "jobs";
         if (strcmp(name_of_command, key5) == 0) {
-            if (len==1) {
+            if (len == 1) {
                 this->my_job_list.printJobsList();
             }
             return nullptr;
@@ -152,10 +152,15 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                 return nullptr;
             }
             if (args[1] == NULL) {
-                my_job_list.fgCommand(0);
+                there_is_a_process_running_in_the_front=true;
+                /////need to update front_pid_job
+
+                my_job_list.fgCommand(0,&this->front_cmd_pid);
             } else {
                 if (atoi(args[1]) > 0) {
-                    my_job_list.fgCommand(atoi(args[1]));
+                    there_is_a_process_running_in_the_front=true;
+                    /////need to update front_pid_job
+                    my_job_list.fgCommand(atoi(args[1]),&this->front_cmd_pid);
                 } else {
                     ///chack if to return error because we get job id<0 and not valid.
 
@@ -219,13 +224,40 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
 
         } else {
             ///save that there is a process which runing and save his pid
-            there_is_a_process_running_in_the_front=true;
-            ForegroundCommand* ret= new ForegroundCommand(args, len, copy_cmd_line);
-            this->front_cmd=ret;
-            return ret;
-        }
+            pid_t p = fork();
+            ///to do:to understand hoe to get the time in this function
+            //start_time=time();
+            if (p > 0) {
+                this->front_cmd_pid = p;
+                this->there_is_a_process_running_in_the_front = true;
+                this->external_front_cmd = new ExternalCommand(args, len, copy_cmd_line);
+                time_t curr_time = time(NULL);
+                int status;
+                waitpid(p, &status, WUNTRACED);
+                if (WIFSTOPPED(status)) {
+                    my_job_list.addJob(external_front_cmd, p, false);
+                    JobEntry* jobEntry=my_job_list.getJobByPid(p);
+                    jobEntry->set_running_time(jobEntry->getRunning_time()+
+                    difftime(time(NULL),curr_time));
+                }
+                //delte args
+                this->there_is_a_process_running_in_the_front = false;
+            } else {
+                if (p == 0) {
+                    setpgrp();
+                    const char path[] = "/bin/bash";
+                    char *const args_to_execv[] = {(char *) "bash", (char *) "-c", copy_cmd_line, nullptr};
+                    int ret = execv(path, args_to_execv);
+                    if (ret == -1) {
+                        perror("smash error: execv failed");
+                    }
+                    exit(0);
+                }
 
+            }
+        }
     }
+
 
 
     // For example:
@@ -274,7 +306,7 @@ Command::Command(char **args, int len) {
     this->len = len;
 }
 
-JobsList::JobEntry::JobEntry(unsigned int job_id, bool is_running, Command *command, pid_t pid) {
+JobEntry::JobEntry(unsigned int job_id, bool is_running, Command *command, pid_t pid,double running_time=0) {
     this->is_running = is_running;
     this->job_id = job_id;
     this->command = command;
@@ -328,12 +360,12 @@ void JobsList::removeFinishedJobs() {
     }
 }
 
-JobsList::JobEntry *JobsList::getLastJob(pid_t *lastJobPId) {
+JobEntry *JobsList::getLastJob(pid_t *lastJobPId) {
     *lastJobPId = command_vector.back().getpid();
     return &command_vector.back();
 }
 
-JobsList::JobEntry *JobsList::getJobById(int jobId) {
+JobEntry *JobsList::getJobById(int jobId) {
     for (vector<JobEntry>::iterator i = command_vector.begin(); i != command_vector.end(); ++i) {
         unsigned int job_id_iter = i->getJob_id();
         if (job_id_iter == jobId) {
@@ -352,23 +384,24 @@ void JobsList::removeJobById(int jobId) {
         }
     }
 }
-void JobsList::fgCommand(int jobId) {
+void JobsList::fgCommand(int jobId,pid_t* pid_to_update) {
     //whitout jod id
     if (jobId == 0) {
         pid_t lastJobPId = -1;
         pid_t *prtLastJobPId = &lastJobPId;
-
         if (command_vector.empty()) {
             cout << "smash error: fg: jobs list is empty" << "\n";
             return;
         } else {
             JobEntry *take_this_job_to_foreground = getLastJob(prtLastJobPId);
+            *pid_to_update=take_this_job_to_foreground->getpid();
             //the last job is BackgroundCommand
             if (take_this_job_to_foreground->getIs_running()) {
                 cout << take_this_job_to_foreground->getCommand() << "& : " << take_this_job_to_foreground->getpid()
                      << "\n";
             } else {
                 //the last job is foregroundCommand
+                *pid_to_update=take_this_job_to_foreground->getpid();
                 kill (take_this_job_to_foreground->getpid(),SIGCONT);
                 time_t curr_time=time(NULL);
                 take_this_job_to_foreground->SetIs_running(true);
@@ -376,8 +409,17 @@ void JobsList::fgCommand(int jobId) {
                 cout << take_this_job_to_foreground->getCommand() << ": " << take_this_job_to_foreground->getpid()
                      << "\n";
             }
-            waitpid(*prtLastJobPId, nullptr, 0);
-            removeJobById(command_vector.back().getJob_id());
+            *pid_to_update=take_this_job_to_foreground->getpid();
+            int status;
+            waitpid(*prtLastJobPId, &status, WUNTRACED);
+            if (WIFSTOPPED(status)) {
+                take_this_job_to_foreground->SetIs_running(false);
+                take_this_job_to_foreground->set_running_time(take_this_job_to_foreground->getRunning_time()+
+                difftime(time(NULL),take_this_job_to_foreground->getLast_start_time()));
+
+            }else {
+                removeJobById(command_vector.back().getJob_id());
+            }
             return;
         }
     }
@@ -464,10 +506,10 @@ void JobsList::killCommand(int JobId, int signum) {
     } else {
         int ret = kill(jobEntry->getpid(), signum);
         if (ret == -1) {
-            cout << "ERROR"; ////fix!!
+            cout << "ERROR kill"; ////fix!!
         } else {
             ///case is stop signal
-            if (signum == 19) {
+            if (signum == SIGSTOP) {
                 time_t curr_time=time(NULL);
                 jobEntry->SetIs_running(false);
                 jobEntry->set_running_time(jobEntry->getRunning_time()+(difftime(curr_time,jobEntry->getLast_start_time())));
@@ -482,7 +524,7 @@ void JobsList::killCommand(int JobId, int signum) {
     }
 }
 
-JobsList::JobEntry *JobsList::getLastStoppedJob(int *jobId) {
+JobEntry *JobsList::getLastStoppedJob(int *jobId) {
     for (int i = command_vector.size() - 1; i >= 0; --i) {
         bool is_running_iter = command_vector[i].getIs_running();
         if (is_running_iter == false) {
@@ -536,7 +578,7 @@ void JobsList::bgCommand(int jobId) {
     }
 }
 
-JobsList::JobEntry *JobsList::getJobByPid(pid_t Pid) {
+JobEntry *JobsList::getJobByPid(pid_t Pid) {
     for (vector<JobEntry>::iterator i = command_vector.begin(); i != command_vector.end(); ++i) {
         pid_t job_id_iter = i->getpid();
         if (job_id_iter == Pid) {
@@ -612,34 +654,43 @@ void ChangeDirCommand::execute() {
 ///to do  fork and wait if foroword
 ////to do fork and not wait in background
 
-ForegroundCommand::ForegroundCommand(char **arg, int
-len, char *cmd_line) : ExternalCommand(arg, len, cmd_line) {
-    pid_t p = fork();
-    ///to do:to understand hoe to get the time in this function
-    //start_time=time();
-    if (p > 0) {
-        son = p;
-        // parent waits for child
-        wait(NULL);
-    } else {
-        if(p==0) {
-            setpgrp();
-            const char path[] = "/bin/bash";
-            char *const args_to_execv[] = {(char *) "bash", (char *) "-c", cmd_line, nullptr};
-            int ret = execv(path, args_to_execv);
-            if (ret == -1) {
-                perror("smash error: execv failed");
-            }
-            exit(0);
-        }
-    }
-
-}
+//ForegroundCommand::ForegroundCommand(char **arg, int len, char *cmd_line, ExternalCommand** Command_to_set, pid_t* pid_to_set,JobsList& jobsList):ExternalCommand(arg,len,cmd_line) {
+//    pid_t p = fork();
+//    ///to do:to understand hoe to get the time in this function
+//    //start_time=time();
+//    if (p > 0) {
+//        cout<<"line 621 pid: "<<p<<"\n";
+//        son = p;
+//        *pid_to_set=p;
+//        *Command_to_set = new ExternalCommand(arg,len,cmd_line);
+//        // parent waits for child
+//        int status;
+//        waitpid(p,&status,WUNTRACED);
+//        if(WIFSTOPPED(status)){
+//            jobsList.addJob(*Command_to_set,p,false);
+//            cout<<"job was added to list: "<<p<<"\n";
+//        }
+//    } else {
+//        if(p==0) {
+//            setpgrp();
+//            const char path[] = "/bin/bash";
+//            char *const args_to_execv[] = {(char *) "bash", (char *) "-c", cmd_line, nullptr};
+//            int ret = execv(path, args_to_execv);
+//            if (ret == -1) {
+//                perror("smash error: execv failed");
+//            }
+//            exit(0);
+//        }
+//    }
+//
+//}
 
 ///to do
 void ForegroundCommand::execute() {
 
 }
+
+
 
 
 BackgroundCommand::BackgroundCommand(char **arg, int
