@@ -206,12 +206,14 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
         if (strcmp(name_of_command, key8) == 0) {
             if (len == 2) {
                 char *arg1 = args[1];
-                if (strcmp(arg1, key7) == 0) {  ////linoy fix the bug
+                if (strcmp(arg1, key7) == 0) {
+                    cout<<"smash: sending SIGKILL signal to "<<this->my_job_list.getVector().size()<<" jobs\n";
+                    this->my_job_list.killAllJobs();
                     return nullptr;
                 }
             }
             if (len == 1) {
-                ////what to do?
+                this->my_job_list.killAllJobs();
                 return nullptr;
             }
             return nullptr;
@@ -586,6 +588,34 @@ JobEntry *JobsList::getJobByPid(pid_t Pid) {
         }
     }
         return nullptr;
+}
+
+void JobsList::printJobsListForKill() {
+    removeFinishedJobs();
+    for (vector<JobEntry>::iterator i = command_vector.begin();
+         i != command_vector.end(); ++i) {
+        unsigned int job_id = i->getJob_id();
+        std::string command_name = i->getCommand();
+        pid_t pid = i->getpid();
+        if (i->getIs_running()) {
+            cout <<pid<<": "<<command_name <<"\n";
+        } else {
+            cout <<pid<<": "<< command_name << " : " << pid << "&"<<"\n";
+
+            //[2] sleep 200 : 30902 11 secs (stopped)
+
+        }
+    }
+}
+
+void JobsList::killAllJobs() {
+    for (vector<JobEntry>::iterator i = command_vector.begin();
+         i != command_vector.end(); ++i) {
+        unsigned int job_id = i->getJob_id();
+        kill(i->getpid(), SIGKILL);
+        this->removeJobById(i->getJob_id());
+    }
+
 }
 //void JobsList::bgCommand(int jobId) {
 ////whitout jod id

@@ -302,10 +302,14 @@ public:
     JobsList() {};
 
     ~JobsList() {};
-
+    std::vector<JobEntry> getVector(){
+        return this->command_vector;
+    }
     void addJob(Command *cmd, pid_t pid, bool is_running);
 
     void printJobsList();
+
+    void printJobsListForKill();
 
     void killAllJobs();
 
@@ -363,6 +367,7 @@ private:
     SmallShell();
 
 public:
+
     Command *CreateCommand(const char *cmd_line, ChpromptCommand &call, ChangeDirCommand &cd);
     JobsList& getJobList(){
         return this->my_job_list;
