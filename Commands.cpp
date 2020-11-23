@@ -216,11 +216,106 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
             if (len == 1) {
                 exit(0);
                 return nullptr;
-
             }
             exit(0);
             return nullptr;
 
+        }
+        char key10[]="|";
+        char key11[]="|&";
+        string commoand2 = string(args[2])+" "+args[3];
+        if(len>1 && (strcmp(args[1],key10) || strcmp(args[1],key11))){
+            int fd[2];
+            int is_pipe_work = pipe(fd);
+            if(is_pipe_work == -1){
+                perror("smash error: pipe failed");
+                return nullptr;
+            }
+            pid_t pid1 = fork();
+            if(pid1 == -1){
+                perror("smash error: fork failed");
+                return nullptr;
+            }
+            if (pid1 == 0) {
+                int check = setpgrp();
+                if(check == -1){
+                    perror("smash error: setpgrp failed");
+                    return nullptr;
+                }
+                if (strcmp(args[1],key10)) {
+                    check = dup2(fd[1], 1);
+                    if (check == -1) {
+                        perror("dup2 error: setpgrp failed");
+                        return nullptr;
+                    }
+                }else{
+                    check = dup2(fd[1], 2);
+                    if (check == -1) {
+                        perror("dup2 error: setpgrp failed");
+                        return nullptr;
+                    }
+                }
+            check = close(fd[0]);
+            if(check == -1){
+                perror("smash error: close failed");
+                return nullptr;
+            }
+                check = close(fd[1]);
+            if(check == -1){
+                perror("smash error: close failed");
+                return nullptr;
+            }
+            this->executeCommand(args[0],call,cd);
+            exit(0);
+            return nullptr;
+        }
+        pid_t pid2 = fork();
+        if(pid2 == -1){
+            perror("smash error: fork failed");
+            return nullptr;
+            }
+        if(pid2==0) {///son2
+            int check = setpgrp();
+            if(check == -1){
+                perror("smash error: close failed");
+                return nullptr;
+            }
+            check= dup2(fd[0],0);
+            if(check == -1){
+                perror("smash error: close failed");
+                return nullptr;
+            }
+            check=close(fd[0]);
+            if(check == -1){
+                perror("smash error: close failed");
+                return nullptr;
+            }
+            check=close(fd[1]);
+            if(check == -1){
+                perror("smash error: close failed");
+                return nullptr;
+            }
+            int n = commoand2.length();
+
+            // declaring character array
+            char char_array[n + 1];
+            strcpy(char_array, commoand2.c_str());
+            this->executeCommand(char_array,call,cd);
+            exit(0);
+            return nullptr;
+            }
+            int check=close(fd[0]);
+            if(check == -1){
+                perror("smash error: close failed");
+                return nullptr;
+            }
+            check=close(fd[1]);
+            if(check == -1){
+                perror("smash error: close failed");
+                return nullptr;
+            }
+           // TODO: craete job and add to list.
+            return nullptr;
         }
         if (isBackground) {
 
