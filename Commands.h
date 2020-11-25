@@ -116,9 +116,11 @@ public:
 };
 
 class RedirectionCommand : public Command {
-    // TODO: Add your data members
+protected:
+    char *cmd_line;
+    char* symbol;
 public:
-    explicit RedirectionCommand(const char *cmd_line);
+    explicit RedirectionCommand(char **arg, int len, char *cmd_line,char* symbol) : Command(arg, len), cmd_line(cmd_line),symbol(symbol) {};
 
     virtual ~RedirectionCommand() {}
 
