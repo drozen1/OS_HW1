@@ -80,6 +80,39 @@ void _removeBackgroundSign(char *cmd_line) {
 
 // TODO: Add your implementation for classes in Commands.h 
 
+vector<string> toSeparateTheString(char *cmd_line, char *symbol) {
+    char *args[COMMAND_MAX_ARGS];
+    char *copy_cmd_line = const_cast<char *>(cmd_line);
+    const char *const_copy = copy_cmd_line;
+//    int len = _parseCommandLine(const_copy, args);
+    vector<string> cmdParsed;
+    if(symbol==NULL){
+        return cmdParsed;
+    }
+    string line = cmd_line;
+    size_t index = line.find(symbol);
+    int len1 = _parseCommandLine( line.substr(0, index).c_str(), args);
+    string cmd1=args[0];
+    for (int i = 1; i < len1; ++i) {
+        cmd1+= " ";
+        cmd1+=args[i];
+    }
+    cmdParsed.push_back(cmd1);
+    cmdParsed.push_back(symbol);
+    string stirng_symbol = symbol;
+    //delete(args);
+    int size_symbol = stirng_symbol.length();
+    int len2 = _parseCommandLine( line.substr(size_symbol + index).c_str(), args);
+    string cmd2=args[0];
+    for (int i = 1; i < len2; ++i) {
+        cmd1+= " ";
+        cmd1+=args[i];
+    }
+    cmdParsed.push_back(cmd2);
+    return cmdParsed;
+}
+
+
 SmallShell::SmallShell() {
     return;
 // TODO: add your implementation
@@ -152,15 +185,15 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                 return nullptr;
             }
             if (args[1] == NULL) {
-                there_is_a_process_running_in_the_front=true;
+                there_is_a_process_running_in_the_front = true;
                 /////need to update front_pid_job
 
-                my_job_list.fgCommand(0,&this->front_cmd_pid);
+                my_job_list.fgCommand(0, &this->front_cmd_pid);
             } else {
                 if (atoi(args[1]) > 0) {
-                    there_is_a_process_running_in_the_front=true;
+                    there_is_a_process_running_in_the_front = true;
                     /////need to update front_pid_job
-                    my_job_list.fgCommand(atoi(args[1]),&this->front_cmd_pid);
+                    my_job_list.fgCommand(atoi(args[1]), &this->front_cmd_pid);
                 } else {
                     ///chack if to return error because we get job id<0 and not valid.
 
@@ -207,7 +240,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
             if (len == 2) {
                 char *arg1 = args[1];
                 if (strcmp(arg1, key7) == 0) {
-                    cout<<"smash: sending SIGKILL signal to "<<this->my_job_list.getVector().size()<<" jobs\n";
+                    cout << "smash: sending SIGKILL signal to " << this->my_job_list.getVector().size() << " jobs\n";
                     this->my_job_list.killAllJobs();
                     exit(0);
                     return nullptr;
@@ -221,102 +254,232 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
             return nullptr;
 
         }
-        char key10[]="|";
-        char key11[]="|&";
-        string commoand2 = string(args[2])+" "+args[3];
-        if(len>1 && (strcmp(args[1],key10) || strcmp(args[1],key11))){
-            int fd[2];
-            int is_pipe_work = pipe(fd);
-            if(is_pipe_work == -1){
-                perror("smash error: pipe failed");
-                return nullptr;
-            }
-            pid_t pid1 = fork();
-            if(pid1 == -1){
-                perror("smash error: fork failed");
-                return nullptr;
-            }
-            if (pid1 == 0) {
-                int check = setpgrp();
-                if(check == -1){
-                    perror("smash error: setpgrp failed");
+
+/// >>, >   linoy start
+
+        char *copy_cmd_line_to_func = const_cast<char *>(cmd_line);
+        if (len > 5) {
+            cerr << "smash error: invalid arguments" << endl;
+            return nullptr;
+        }
+        //to make a vector of strings
+        char* is_double_chets = (char*) ">>";
+        char* is_chets = (char*) ">";
+        char* is_pip1 = (char*) "|";
+        char* is_pip2 = (char*) "|&";
+
+        string cmy_line_is_a_string = cmd_line;
+        char *symbol = NULL;
+        if (cmy_line_is_a_string.find(is_double_chets) != string::npos) {
+            symbol = is_double_chets;
+        } else if (cmy_line_is_a_string.find(is_chets) != string::npos) {
+            symbol = is_chets;
+        } else if (cmy_line_is_a_string.find(is_pip1) != string::npos) {
+            symbol = is_pip1;
+        } else if (cmy_line_is_a_string.find(is_pip2) != string::npos) {
+            symbol = is_pip2;
+        }
+        if(symbol!=NULL) {
+            vector<string> pars_string = toSeparateTheString(copy_cmd_line_to_func, symbol);
+            const char *name_of_file = pars_string[2].c_str();
+            string showpid = "showpid";
+            //strcmp(pars_string[0].c_str(), showpid.c_str())
+            if (pars_string[0] == "chprompt" || pars_string[0] == "showpid" ||
+                pars_string[0] == "pwd" ||
+                pars_string[0] == "cd" || pars_string[0] == "jobs" || pars_string[0] == "kill" ||
+                pars_string[0] == "fg" || pars_string[0] == "bg" || pars_string[0] == "quit") {
+
+                //to all the commands
+                int stdout_copy = dup(1);
+                if (stdout_copy == -1) {
+                    perror("smash error: dup failed");
                     return nullptr;
                 }
-                if (strcmp(args[1],key10)) {
-                    check = dup2(fd[1], 1);
-                    if (check == -1) {
-                        perror("dup2 error: setpgrp failed");
+                if (close(1) == -1) {
+                    perror("smash error: close failed");
+                    return nullptr;
+                }
+                int opened = 0;
+                if (symbol == ">") {
+                    opened = open(name_of_file, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+                } else { // ">>"
+                    opened = open(name_of_file, O_WRONLY | O_CREAT | O_APPEND, 0666);
+                }
+                if (opened == -1) {
+                    perror("smash error: open failed");
+                    return nullptr;
+                }
+                const char *convert_to_chat = pars_string[0].c_str();
+                this->executeCommand(convert_to_chat, call, cd);
+                int check = close(1);
+                if (check == -1) {
+                    perror("smash error: close failed");
+                    return nullptr;
+                }
+                check = dup2(stdout_copy, 1);
+                if (check == -1) {
+                    perror("smash error: dup failed");
+                    return nullptr;
+                }
+                return nullptr;
+            } else { //not built-in, should fork
+                pid_t pid = fork();
+                if (pid == -1) {
+                    perror("smash error: fork failed");
+                    return nullptr;
+                }
+
+
+                if (pid == 0) { //son
+                    int res = setpgrp();
+                    char path[] = "/bin/bash";
+                    //char *args_to_execv[] = {(char *) "bash", (char *) "-c", cmd_line, nullptr};
+                    if (res == -1) {
+                        perror("smash error: setpgrp failed");
                         return nullptr;
                     }
-                }else{
-                    check = dup2(fd[1], 2);
-                    if (check == -1) {
-                        perror("dup2 error: setpgrp failed");
+                    if (close(1) == -1) {
+                        perror("smash error: close failed");
+                        return nullptr;
+                    }
+                    int opened = 0;
+                    if (symbol == ">") {
+                        opened = open(name_of_file, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+                    } else { // ">>"
+                        opened = open(name_of_file, O_WRONLY | O_CREAT | O_APPEND, 0666);
+                    }
+                    if (opened == -1) {
+                        perror("smash error: open failed");
+                        exit(0);
+                    }
+                    char *copy_cmd_line_to_func2 = const_cast<char *>(pars_string[0].c_str());
+
+                    bool isBackground_in0 = false;
+                    if (_isBackgroundComamnd(pars_string[0].c_str())) {
+                        //backGround
+                        _removeBackgroundSign(copy_cmd_line_to_func2);
+                        isBackground_in0 = true;
+                    }
+                    if (isBackground) {
+                        char *args_to_execv[] = {(char *) "bash", (char *) "-c", copy_cmd_line_to_func2, nullptr};
+                        int ret = execv(path, args_to_execv);
+                        if (ret == -1) {
+                            perror("smash error: execv failed");
+                        }
+                        exit(0);
+                        return nullptr;
+                    } else {
+                        char *args_to_execv[] = {(char *) "bash", (char *) "-c", copy_cmd_line_to_func2, nullptr};
+                        int ret = execv(path, args_to_execv);
+                        int status;
+                        waitpid(pid, &status, WUNTRACED);
+                        if (ret == -1) {
+                            perror("smash error: execv failed");
+                        }
+                        exit(0);
                         return nullptr;
                     }
                 }
-            check = close(fd[0]);
-            if(check == -1){
-                perror("smash error: close failed");
-                return nullptr;
             }
-                check = close(fd[1]);
-            if(check == -1){
-                perror("smash error: close failed");
-                return nullptr;
-            }
-            this->executeCommand(args[0],call,cd);
-            exit(0);
-            return nullptr;
         }
-        pid_t pid2 = fork();
-        if(pid2 == -1){
-            perror("smash error: fork failed");
-            return nullptr;
-            }
-        if(pid2==0) {///son2
-            int check = setpgrp();
-            if(check == -1){
-                perror("smash error: close failed");
-                return nullptr;
-            }
-            check= dup2(fd[0],0);
-            if(check == -1){
-                perror("smash error: close failed");
-                return nullptr;
-            }
-            check=close(fd[0]);
-            if(check == -1){
-                perror("smash error: close failed");
-                return nullptr;
-            }
-            check=close(fd[1]);
-            if(check == -1){
-                perror("smash error: close failed");
-                return nullptr;
-            }
-            int n = commoand2.length();
 
-            // declaring character array
-            char char_array[n + 1];
-            strcpy(char_array, commoand2.c_str());
-            this->executeCommand(char_array,call,cd);
-            exit(0);
-            return nullptr;
-            }
-            int check=close(fd[0]);
-            if(check == -1){
-                perror("smash error: close failed");
-                return nullptr;
-            }
-            check=close(fd[1]);
-            if(check == -1){
-                perror("smash error: close failed");
-                return nullptr;
-            }
-           // TODO: craete job and add to list.
-            return nullptr;
-        }
+
+//        char key10[]="|";
+//        char key11[]="|&";
+//        string commoand2 = string(args[2])+" "+args[3];
+//        if(len>1 && (strcmp(args[1],key10) || strcmp(args[1],key11))){
+//            int fd[2];
+//            int is_pipe_work = pipe(fd);
+//            if(is_pipe_work == -1){
+//                perror("smash error: pipe failed");
+//                return nullptr;
+//            }
+//            pid_t pid1 = fork();
+//            if(pid1 == -1){
+//                perror("smash error: fork failed");
+//                return nullptr;
+//            }
+//            if (pid1 == 0) {
+//                int check = setpgrp();
+//                if(check == -1){
+//                    perror("smash error: setpgrp failed");
+//                    return nullptr;
+//                }
+//                if (strcmp(args[1],key10)) {
+//                    check = dup2(fd[1], 1);
+//                    if (check == -1) {
+//                        perror("dup2 error: setpgrp failed");
+//                        return nullptr;
+//                    }
+//                }else{
+//                    check = dup2(fd[1], 2);
+//                    if (check == -1) {
+//                        perror("dup2 error: setpgrp failed");
+//                        return nullptr;
+//                    }
+//                }
+//            check = close(fd[0]);
+//            if(check == -1){
+//                perror("smash error: close failed");
+//                return nullptr;
+//            }
+//                check = close(fd[1]);
+//            if(check == -1){
+//                perror("smash error: close failed");
+//                return nullptr;
+//            }
+//            this->executeCommand(args[0],call,cd);
+//            exit(0);
+//            return nullptr;
+//        }
+//        pid_t pid2 = fork();
+//        if(pid2 == -1){
+//            perror("smash error: fork failed");
+//            return nullptr;
+//            }
+//        if(pid2==0) {///son2
+//            int check = setpgrp();
+//            if(check == -1){
+//                perror("smash error: close failed");
+//                return nullptr;
+//            }
+//            check= dup2(fd[0],0);
+//            if(check == -1){
+//                perror("smash error: close failed");
+//                return nullptr;
+//            }
+//            check=close(fd[0]);
+//            if(check == -1){
+//                perror("smash error: close failed");
+//                return nullptr;
+//            }
+//            check=close(fd[1]);
+//            if(check == -1){
+//                perror("smash error: close failed");
+//                return nullptr;
+//            }
+//            int n = commoand2.length();
+//
+//            // declaring character array
+//            char char_array[n + 1];
+//            strcpy(char_array, commoand2.c_str());
+//            this->executeCommand(char_array,call,cd);
+//            exit(0);
+//            return nullptr;
+//            }
+//            int check=close(fd[0]);
+//            if(check == -1){
+//                perror("smash error: close failed");
+//                return nullptr;
+//            }
+//            check=close(fd[1]);
+//            if(check == -1){
+//                perror("smash error: close failed");
+//                return nullptr;
+//            }
+//           // TODO: craete job and add to list.
+//            return nullptr;
+//        }
         if (isBackground) {
 
             BackgroundCommand *beckCommand = new BackgroundCommand(args, len, copy_cmd_line);

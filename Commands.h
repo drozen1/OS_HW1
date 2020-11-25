@@ -9,6 +9,9 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <time.h>
+#include<sys/types.h>
+#include<sys/stat.h>
+#include <fcntl.h>
 
 #define COMMAND_ARGS_MAX_LENGTH (200)
 #define COMMAND_MAX_ARGS (20)
@@ -168,7 +171,7 @@ public:
     void execute() override {
         ///i chang it to start whit 2 because the i[0]=. and i[1]= .. and we dont want to print them.
         ///we need to check if it is allways like this
-        for (int i = 2; i < num_of_files; i++) {
+        for (int i = 0; i < num_of_files; i++) {
             std::cout << fileListTemp[i]->d_name << "\n";
         }
         //free all the things that scandir is allocat

@@ -15,7 +15,6 @@ void ctrlZHandler(int sig_num) {
             kill( pid_to_stop, SIGSTOP);
             cout<<"smash: process "<<pid_to_stop<<" was stopped"<<"\n";
     }
-
     return;
 }
 ///case: job is already in the vector
