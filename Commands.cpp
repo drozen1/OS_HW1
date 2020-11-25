@@ -431,113 +431,118 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                         time_t curr_time = time(NULL);
                         int status;
                         check = waitpid(pid1, &status, WUNTRACED);
-                        if(check == -1) {
+                        if (check == -1) {
                             perror("smash error: waitpid failed");
                         }
                         check = waitpid(pid2, &status, WUNTRACED);
-                        if(check == -1) {
+                        if (check == -1) {
                             perror("smash error: waitpid failed");
                         }
                         return nullptr;
-                    } else {
-                        if (symbol == ">" || symbol == "<<") {//not built-in, should fork
-                            pid_t pid = fork();
-                            if (pid == -1) {
-                                perror("smash error: fork failed");
-                                return nullptr;
-                            }
-                            if (pid == 0) { //son
+                    }
+                }
+            } else {
+                if (symbol == ">" || symbol == "<<") {//not built-in, should fork
+                    char *copy_cmd_line_to_func2 = const_cast<char *>(pars_string[0].c_str());
 
-                                int res = setpgrp();
-                                char path[] = "/bin/bash";
-                                if (res == -1) {
-                                    perror("smash error: setpgrp failed");
-                                    return nullptr;
-                                }
-                                //to all the commands
-                                int stdout_copy = dup(1);
-                                if (stdout_copy == -1) {
-                                    perror("smash error: dup failed");
-                                    return nullptr;
-                                }
-                                if (close(1) == -1) {
-                                    perror("smash error: close failed");
-                                    return nullptr;
-                                }
-                                int opened = 0;
-                                if (symbol == ">") {
-                                    opened = open(name_of_file, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-                                } else { // ">>"
-                                    opened = open(name_of_file, O_WRONLY | O_CREAT | O_APPEND, 0666);
-                                }
-                                if (opened == -1) {
-                                    perror("smash error: open failed");
-                                    exit(0);
-                                }
-                                char *copy_cmd_line_to_func2 = const_cast<char *>(pars_string[0].c_str());
-
-                                bool isBackground_in0 = false;
-                                if (_isBackgroundComamnd(pars_string[0].c_str())) {
-                                    //backGround
-                                    _removeBackgroundSign(copy_cmd_line_to_func2);
-                                    isBackground_in0 = true;
-                                }
-                                if (isBackground_in0) {
-
-                                    ExternalCommand *external_ommand_in_rid = new ExternalCommand(args, len,
-                                                                                                  copy_cmd_line_to_func2);
-                                    my_job_list.addJob(external_ommand_in_rid, getpid(), true);
-                                    char *args_to_execv[] = {(char *) "bash", (char *) "-c", copy_cmd_line_to_func2,
-                                                             nullptr};
-                                    int ret = execv(path, args_to_execv);
-                                    if (ret == -1) {
-                                        perror("smash error: execv failed");
-                                    }
-                                    int check = close(1);
-                                    if (check == -1) {
-                                        perror("smash error: close failed");
-                                        return nullptr;
-                                    }
-                                    check = dup2(stdout_copy, 1);
-                                    if (check == -1) {
-                                        perror("smash error: dup failed");
-                                        return nullptr;
-                                    }
-                                    exit(0);
-                                    return nullptr;
-                                } else { //frontgroundCommand
-                                    char *args_to_execv[] = {(char *) "bash", (char *) "-c", copy_cmd_line_to_func2,
-                                                             nullptr};
-                                    int ret = execv(path, args_to_execv);
-                                    int status;
-                                    ///chack if getpid is work
-                                    waitpid(getpid(), &status, WUNTRACED);
-                                    if (ret == -1) {
-                                        perror("smash error: execv failed");
-                                    }
-                                    int check = close(1);
-                                    if (check == -1) {
-                                        perror("smash error: close failed");
-                                        return nullptr;
-                                    }
-                                    check = dup2(stdout_copy, 1);
-                                    if (check == -1) {
-                                        perror("smash error: dup failed");
-                                        return nullptr;
-                                    }
-                                    exit(0);
-                                    return nullptr;
-                                }
-
-                            }
-                            return nullptr;
-                        } else {
-                            if (symbol == ">" || symbol == ">>") {
-                                ///external command pipe
-                            }
-
+                    bool isBackground_in0 = false;
+                    if (_isBackgroundComamnd(pars_string[0].c_str())) {
+                        //backGround
+                        _removeBackgroundSign(copy_cmd_line_to_func2);
+                        isBackground_in0 = true;
+                    }
+                    pid_t pid = fork();
+                    if (pid == -1) {
+                        perror("smash error: fork failed");
+                        return nullptr;
+                    }
+                    if (pid > 0) {//father case
+                        if (isBackground_in0 == false) {
+                            int status;
+                            ///chack if getpid is work
+                            waitpid(pid, &status, WUNTRACED);
                         }
                     }
+                    if (pid == 0) { //son
+
+                        int res = setpgrp();
+                        char path[] = "/bin/bash";
+                        if (res == -1) {
+                            perror("smash error: setpgrp failed");
+                            return nullptr;
+                        }
+                        //to all the commands
+                        int stdout_copy = dup(1);
+                        if (stdout_copy == -1) {
+                            perror("smash error: dup failed");
+                            return nullptr;
+                        }
+                        if (close(1) == -1) {
+                            perror("smash error: close failed");
+                            return nullptr;
+                        }
+                        int opened = 0;
+                        if (symbol == ">") {
+                            opened = open(name_of_file, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+                        } else { // ">>"
+                            opened = open(name_of_file, O_WRONLY | O_CREAT | O_APPEND, 0666);
+                        }
+                        if (opened == -1) {
+                            perror("smash error: open failed");
+                            exit(0);
+                        }
+
+                        if (isBackground_in0) {
+                            char *args_to_execv[] = {(char *) "bash", (char *) "-c", copy_cmd_line_to_func2,
+                                                     nullptr};
+                            int ret = execv(path, args_to_execv);
+                            if (ret == -1) {
+                                perror("smash error: execv failed");
+                            }
+                            int check = close(1);
+                            if (check == -1) {
+                                perror("smash error: close failed");
+                                return nullptr;
+                            }
+                            check = dup2(stdout_copy, 1);
+                            if (check == -1) {
+                                perror("smash error: dup failed");
+                                return nullptr;
+                            }
+                            exit(0);
+                        } else { //frontgroundCommand
+                            char *args_to_execv[] = {(char *) "bash", (char *) "-c", copy_cmd_line_to_func2,
+                                                     nullptr};
+                            int ret = execv(path, args_to_execv);;
+                            if (ret == -1) {
+                                perror("smash error: execv failed");
+                            }
+                            int check = close(1);
+                            if (check == -1) {
+                                perror("smash error: close failed");
+                                return nullptr;
+                            }
+                            check = dup2(stdout_copy, 1);
+                            if (check == -1) {
+                                perror("smash error: dup failed");
+                                return nullptr;
+                            }
+                            exit(0);
+                        }
+
+                    }
+                    if (pid > 0) {//father case and isBackground_in0==true
+                        //add this command into the list
+                        if (isBackground_in0) {
+                            ExternalCommand *external_command_in_rid = new ExternalCommand(args, len,
+                                                                                           copy_cmd_line_to_func2);
+                            my_job_list.addJob(external_command_in_rid, pid, true);
+                        }
+                    }
+                    return nullptr;
+                } else {
+
+
                 }
             }
         }
@@ -591,12 +596,9 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
             }
         }
     }
+
     return nullptr;
 }
-
-
-
-
 
 
 void SmallShell::executeCommand(const char *cmd_line, ChpromptCommand &call, ChangeDirCommand &cd) {
