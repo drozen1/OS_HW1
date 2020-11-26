@@ -165,10 +165,10 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
         symbol = is_double_chets;
     } else if (cmy_line_is_a_string.find(is_chets) != string::npos) {
         symbol = is_chets;
-    } else if (cmy_line_is_a_string.find(is_pip1) != string::npos) {
-        symbol = is_pip1;
     } else if (cmy_line_is_a_string.find(is_pip2) != string::npos) {
         symbol = is_pip2;
+    }else if (cmy_line_is_a_string.find(is_pip1) != string::npos) {
+        symbol = is_pip1;
     }
 
 
@@ -425,18 +425,25 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                             perror("smash error: close failed");
                             return nullptr;
                         }
-                        this->front_cmd_pid = pid1;
-                        this->there_is_a_process_running_in_the_front = true;
-                        this->external_front_cmd = new ExternalCommand(args, len, copy_cmd_line);
-                        time_t curr_time = time(NULL);
-                        int status;
-                        check = waitpid(pid1, &status, WUNTRACED);
-                        if (check == -1) {
-                            perror("smash error: waitpid failed");
-                        }
-                        check = waitpid(pid2, &status, WUNTRACED);
-                        if (check == -1) {
-                            perror("smash error: waitpid failed");
+                        if (!isBackground) {
+                            this->front_cmd_pid = pid1;
+                            this->there_is_a_process_running_in_the_front = true;
+                            this->external_front_cmd = new ExternalCommand(args, len, copy_cmd_line);
+                            time_t curr_time = time(NULL);
+                            int status;
+                            check = waitpid(pid1, &status, WUNTRACED);
+                            if (check == -1) {
+                                perror("smash error: waitpid failed");
+                            }
+                            check = waitpid(pid2, &status, WUNTRACED);
+                            if (check == -1) {
+                                perror("smash error: waitpid failed");
+                            }
+                        }else{
+                            ///pipe in the back with & at the end
+                            char *copy_cmd_line_to_func2 = const_cast<char *>(command1.c_str());
+                            ExternalCommand *external_command_in_rid = new ExternalCommand(args, len,copy_cmd_line_to_func2);
+                            my_job_list.addJob(external_command_in_rid, pid1, true);
                         }
                         return nullptr;
                     }
