@@ -38,5 +38,30 @@ void ctrlCHandler(int sig_num) {
 }
 
 void alarmHandler(int sig_num) {
-    // TODO: Add your implementation
+    if(sig_num == SIGALRM){
+        SmallShell& smash = SmallShell::getInstance();
+        cout<< "smash: got an alarm"<<endl;
+        for (vector<JobEntry>::iterator it = smash.gettimeout_list().getVector().begin();
+             it != smash.gettimeout_list().getVector().end(); ++it) {
+            time_t timer = time(NULL);
+            time_t seconds = difftime(timer,it->getLast_start_time());
+            if (seconds == it->getRunning_time()){
+//                if (!it->finishedTimeout){
+                    int pid = it->getpid();
+                    cout<< "smash: ";
+                    it->print_cmd_line();
+                    cout<< " timed out!" <<endl;
+                    //timeout with pipe wont be tested, we can use kill
+                    int res = kill(pid, SIGKILL);
+                    if(res == -1){
+                        perror("smash error: kill failed");
+                    }
+//                }
+                it = smash.gettimeout_list().getVector().erase(it);
+            }else{
+                it++;
+            }
+        }
+        smash.set_alarm();
+    }
 }

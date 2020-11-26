@@ -92,13 +92,21 @@ vector<string> toSeparateTheString(char *cmd_line, char *symbol) {
     string line = cmd_line;
     size_t index = line.find(symbol);
     int len1 = _parseCommandLine(line.substr(0, index).c_str(), args);
-    string cmd1 = args[0];
-    for (int i = 1; i < len1; ++i) {
-        cmd1 += " ";
-        cmd1 += args[i];
+    string time_string;
+    if(len1>0) {
+        string cmd1 = args[0];
+        for (int i = 1; i < len1; ++i) {
+            cmd1 += " ";
+            cmd1 += args[i];
+        }
+        cmdParsed.push_back(cmd1);
+        cmdParsed.push_back(symbol);
+
+    }else{
+        time_string = symbol;
+        time_string+= " ";
+
     }
-    cmdParsed.push_back(cmd1);
-    cmdParsed.push_back(symbol);
     string stirng_symbol = symbol;
     for (int i = 0; i < len1; i++) {
         //we use malloc so we need to free it and not delete it
@@ -107,16 +115,37 @@ vector<string> toSeparateTheString(char *cmd_line, char *symbol) {
     //delete(args);
     int size_symbol = stirng_symbol.length();
     int len2 = _parseCommandLine(line.substr(size_symbol + index).c_str(), args);
-    string cmd2 = args[0];
-    for (int i = 1; i < len2; ++i) {
-        cmd2 += " ";
-        cmd2 += args[i];
+    string cmd2;
+    int i;
+    if(symbol!="timeout") {
+        string cmd2 = args[0];
+        i = 1;
+        while ( i < len2) {
+            cmd2 += " ";
+            cmd2 += args[i];
+            i++;
+        }
+        cmdParsed.push_back(cmd2);
     }
+    if(symbol=="timeout") {
+        time_string += args[0];
+        cmdParsed.push_back(time_string);
+        cmd2 = args[1];
+        i = 2;
+        while ( i < len2) {
+            cmd2 += " ";
+            cmd2 += args[i];
+            i++;
+        }
+        cmdParsed.push_back(cmd2);
+    }
+
+
     for (int i = 0; i < len2; i++) {
         //we use malloc so we need to free it and not delete it
         free(args[i]);
     }
-    cmdParsed.push_back(cmd2);
+
     return cmdParsed;
 }
 
@@ -136,7 +165,7 @@ SmallShell::~SmallShell() {
 */
 Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, ChangeDirCommand &cd) {
     ///do to: we do a new to a command and it will be a memory lip
-
+    this->my_job_list.removeFinishedJobs();
     char *args[COMMAND_MAX_ARGS];
     char *copy_cmd_line = const_cast<char *>(cmd_line);
     // char** check= this->my_job_list.getJobById(1)->getCommand()
@@ -158,6 +187,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
     char *is_chets = (char *) ">";
     char *is_pip1 = (char *) "|";
     char *is_pip2 = (char *) "|&";
+    char *is_timeout = (char *) "timeout";
 
     string cmy_line_is_a_string = cmd_line;
     char *symbol = NULL;
@@ -169,6 +199,9 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
         symbol = is_pip2;
     }else if (cmy_line_is_a_string.find(is_pip1) != string::npos) {
         symbol = is_pip1;
+    }
+    if (cmy_line_is_a_string.find(is_timeout) != string::npos) {
+        symbol = is_timeout;
     }
 
 
@@ -293,9 +326,9 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
             cerr << "smash error: invalid arguments" << endl;
             return nullptr;
         }
-
+        vector<string> pars_string;
         if (symbol != NULL) {
-            vector<string> pars_string = toSeparateTheString(copy_cmd_line_to_func, symbol);
+            pars_string = toSeparateTheString(copy_cmd_line_to_func, symbol);
             const char *name_of_file = pars_string[2].c_str();
             if (pars_string[0] == "chprompt" || pars_string[0] == "showpid" || pars_string[0] == "pwd" ||
                 pars_string[0] == "cd" || pars_string[0] == "jobs" || pars_string[0] == "kill" ||
@@ -442,6 +475,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                         }else{
                             ///pipe in the back with & at the end
                             char *copy_cmd_line_to_func2 = const_cast<char *>(command1.c_str());
+                            ///edit agrs..
                             ExternalCommand *external_command_in_rid = new ExternalCommand(args, len,copy_cmd_line_to_func2);
                             my_job_list.addJob(external_command_in_rid, pid1, true);
                         }
@@ -563,14 +597,28 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
 //            return nullptr;
 //        }
         if (isBackground) {
-
+            ///check if timeout with &
             BackgroundCommand *beckCommand = new BackgroundCommand(args, len, copy_cmd_line);
             my_job_list.addJob(beckCommand, beckCommand->getpid(), true);
             return beckCommand;
 
         } else {
+
+
+
             ///save that there is a process which runing and save his pid
             pid_t p = fork();
+
+            ///check if timeout
+            if (symbol=="timeout"){
+                if (p > 0) {
+                    string duration_str= args[1];
+                    double duration = atof(duration_str.c_str());
+
+                    this->timeout_list.addJob_timeoutVec(p,duration,copy_cmd_line);
+                    set_alarm();
+                }
+            }
             ///to do:to understand hoe to get the time in this function
             //start_time=time();
             if (p > 0) {
@@ -590,6 +638,12 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                 this->there_is_a_process_running_in_the_front = false;
             } else {
                 if (p == 0) {
+                    if (symbol=="timeout") {
+                        string copy="";
+                        for(int i = 2; i < pars_string.size(); ++i) {
+                            copy+=pars_string[i];
+                        }
+                    }
                     setpgrp();
                     const char path[] = "/bin/bash";
                     char *const args_to_execv[] = {(char *) "bash", (char *) "-c", copy_cmd_line, nullptr};
@@ -621,6 +675,33 @@ void SmallShell::executeCommand(const char *cmd_line, ChpromptCommand &call, Cha
     // Command* cmd = CreateCommand(cmd_line);
     // cmd->execute();
     // Please note that you must fork smash process for some commands (e.g., external commands....)
+}
+
+void SmallShell::set_alarm() {
+
+        time_t timer;
+        time(&timer);
+        double min = numeric_limits<int>::max();
+        bool newAlarm = false;
+    for (vector<JobEntry>::iterator i = this->timeout_list.getVector().begin();
+         i != this->timeout_list.getVector().end(); ++i) {
+        int nextAlarm = 0;
+        double duration = i->getRunning_time();
+        time_t startSeconds = i->getLast_start_time();
+        //time_t seconds = timer - (duration + startSeconds);
+        double seconds = difftime(startSeconds, timer);
+        seconds += duration;
+        //cout << "the duration: " << seconds << endl;
+        if (seconds < min) {
+            min = seconds;
+            newAlarm = true;
+        }
+    }
+        if(newAlarm){
+            // cout<< "min " << min <<endl;
+            alarm(min);
+        }
+
 }
 
 void ShowPidCommand::execute() {
@@ -952,6 +1033,16 @@ void JobsList::killAllJobs() {
         this->removeJobById(i->getJob_id());
     }
 
+}
+
+
+
+
+void JobsList::addJob_timeoutVec(pid_t pid, double duration, char *copy_cmd_line) {
+    JobEntry new_job = JobEntry(1, true, nullptr , pid);
+    new_job.set_running_time(duration);
+    new_job.set_cmd_line(copy_cmd_line);
+    this->command_vector.push_back(new_job);
 }
 //void JobsList::bgCommand(int jobId) {
 ////whitout jod id

@@ -16,6 +16,14 @@ int main(int argc, char *argv[]) {
         perror("smash error: failed to set ctrl-C handler");
     }
 
+    struct sigaction struct_of_sigaction;
+    struct_of_sigaction.sa_handler = alarmHandler;
+    sigemptyset(&struct_of_sigaction.sa_mask);
+    struct_of_sigaction.sa_flags = SA_RESTART;
+    if (sigaction(SIGALRM, &struct_of_sigaction, NULL) == -1){
+        perror("smash error: failed to set alarm handler");
+    }
+
     //TODO: setup sig alarm handler
     ChpromptCommand call = ChpromptCommand(nullptr, 0);
 

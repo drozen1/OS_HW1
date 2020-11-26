@@ -256,6 +256,8 @@ class JobEntry {
     time_t last_start_time;
     double running_time;
     pid_t pid;
+    char* cmd_line;
+    int len_cmd_line;
 public:
     JobEntry(unsigned int job_id, bool is_running, Command *command, pid_t pid,double running_time);
 
@@ -264,6 +266,19 @@ public:
     unsigned int getJob_id() {
         return job_id;
     }
+
+    char* get_cmd_line(){
+        return this->cmd_line;
+    }
+    void set_cmd_line(char* cmd_line){
+        this->cmd_line=cmd_line;
+    }
+    void print_cmd_line(){
+        std::cout<<cmd_line;
+    }
+    Command* get_real_command(){
+        return this->command;
+    };
 
     pid_t getpid() {
         return pid;
@@ -311,6 +326,8 @@ public:
         return this->command_vector;
     }
     void addJob(Command *cmd, pid_t pid, bool is_running);
+
+    void addJob_timeoutVec(pid_t pid, double duration,char *copy_cmd_line);
 
     void printJobsList();
 
@@ -365,6 +382,7 @@ class SmallShell {
 private:
     // TODO: Add your data members
     JobsList my_job_list;
+    JobsList timeout_list;
     bool there_is_a_process_running_in_the_front;
     ForegroundCommand* front_cmd;
     pid_t front_cmd_pid;
@@ -377,9 +395,14 @@ public:
     JobsList& getJobList(){
         return this->my_job_list;
     }
+    JobsList& gettimeout_list(){
+        return this->timeout_list;
+    }
     pid_t getFront_cmd_pid(){
         return front_cmd_pid;
     }
+    void set_alarm();
+
     void setFront_cmd_pid(pid_t new_pid){
         this->front_cmd_pid=new_pid;
     }
