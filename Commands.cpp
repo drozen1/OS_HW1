@@ -598,6 +598,38 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
 //        }
         if (isBackground) {
             ///check if timeout with &
+            if (symbol!=NULL & symbol=="timeout"){
+                pid_t p = fork();
+                if(p == -1){
+                    perror("smash error: fork failed");
+                    return nullptr;
+                }
+                if (p>0) {
+                    string duration_str = args[1];
+                    double duration = atof(duration_str.c_str());
+                    this->timeout_list.addJob_timeoutVec(p, duration, copy_cmd_line);
+                    ExternalCommand* e = new ExternalCommand(args, len, copy_cmd_line);
+                    my_job_list.addJob(e, p, true);
+                    set_alarm();
+                    return nullptr;
+                }
+                else{
+                    ///son
+                    int check = setpgrp();
+                    if(check == -1){
+                        perror("smash error: setpgrp failed");
+                        return nullptr;
+                    }
+                    char path[] = "/bin/bash";
+                    char *args_to_execv[] = {(char *) "bash", (char *) "-c", const_cast<char *>(pars_string[1].c_str()), nullptr};
+                    int ret = execv(path, args_to_execv);
+                    if (ret == -1) {
+                        perror("smash error: execv failed");
+                    }
+                    exit(0);
+                    return nullptr;
+                }
+            }
             BackgroundCommand *beckCommand = new BackgroundCommand(args, len, copy_cmd_line);
             my_job_list.addJob(beckCommand, beckCommand->getpid(), true);
             return beckCommand;
@@ -614,7 +646,6 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                 if (p > 0) {
                     string duration_str= args[1];
                     double duration = atof(duration_str.c_str());
-
                     this->timeout_list.addJob_timeoutVec(p,duration,copy_cmd_line);
                     set_alarm();
                 }

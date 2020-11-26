@@ -29,6 +29,7 @@ public:
         std::string ret = "";
         for (int i = 0; i < len; i++) {
             ret += args[i];
+            ret += " ";
         }
         return ret;
     }
