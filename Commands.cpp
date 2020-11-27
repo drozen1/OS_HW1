@@ -321,14 +321,13 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
 
 /// >>, >   linoy start
 
-        char *copy_cmd_line_to_func = const_cast<char *>(cmd_line);
         if (len > 5) {
             cerr << "smash error: invalid arguments" << endl;
             return nullptr;
         }
         vector<string> pars_string;
         if (symbol != NULL) {
-            pars_string = toSeparateTheString(copy_cmd_line_to_func, symbol);
+            pars_string = toSeparateTheString(copy_cmd_line, symbol);
             const char *name_of_file = pars_string[2].c_str();
             if (pars_string[0] == "chprompt" || pars_string[0] == "showpid" || pars_string[0] == "pwd" ||
                 pars_string[0] == "cd" || pars_string[0] == "jobs" || pars_string[0] == "kill" ||
@@ -486,19 +485,13 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                 if (symbol == ">" || symbol == "<<") {//not built-in, should fork
                     char *copy_cmd_line_to_func2 = const_cast<char *>(pars_string[0].c_str());
 
-                    bool isBackground_in0 = false;
-                    if (_isBackgroundComamnd(pars_string[0].c_str())) {
-                        //backGround
-                        _removeBackgroundSign(copy_cmd_line_to_func2);
-                        isBackground_in0 = true;
-                    }
                     pid_t pid = fork();
                     if (pid == -1) {
                         perror("smash error: fork failed");
                         return nullptr;
                     }
                     if (pid > 0) {//father case
-                        if (isBackground_in0 == false) {
+                        if (isBackground == false) {
                             int status;
                             ///chack if getpid is work
                             waitpid(pid, &status, WUNTRACED);
@@ -533,7 +526,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                             exit(0);
                         }
 
-                        if (isBackground_in0) {
+                        if (isBackground) {
                             char *args_to_execv[] = {(char *) "bash", (char *) "-c", copy_cmd_line_to_func2,
                                                      nullptr};
                             int ret = execv(path, args_to_execv);
@@ -574,7 +567,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                     }
                     if (pid > 0) {//father case and isBackground_in0==true
                         //add this command into the list
-                        if (isBackground_in0) {
+                        if (isBackground) {
                             ExternalCommand *external_command_in_rid = new ExternalCommand(args, len,
                                                                                            copy_cmd_line_to_func2);
                             my_job_list.addJob(external_command_in_rid, pid, true);
