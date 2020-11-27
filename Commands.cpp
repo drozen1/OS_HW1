@@ -241,14 +241,13 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
             if (strcmp(name_of_command, key3) == 0) {
                 return new GetCurrDirCommand(args, len);
             }
-            if (len == 1) {
                 char key4[] = "cd";
                 if (strcmp(name_of_command, key4) == 0) {
                     cd.Set_Orig_Vals(args, len);
                     cd.execute();
                     return nullptr;
                 }
-            }
+
             char key5[] = "jobs";
             if (strcmp(name_of_command, key5) == 0) {
                 this->my_job_list.printJobsList();
@@ -1250,7 +1249,8 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                 if (temp != NULL) {
                     chdir(temp);
                 } else {
-                    std::cout << "smash error: cd: OLDPWD not set";
+                    lastCd =NULL;
+                    std::cout << "smash error: cd: OLDPWD not set"<<"\n";
                 }
             } else {
                 chdir(args[1]);

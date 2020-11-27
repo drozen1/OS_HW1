@@ -211,7 +211,7 @@ class ChangeDirCommand : public BuiltInCommand {
 private:
     char *lastCd;
 public:
-    ChangeDirCommand(char **args, int len) : BuiltInCommand(args, len) {};
+    ChangeDirCommand(char **args, int len) : BuiltInCommand(args, len) {lastCd=NULL;};
 
     //ChangeDirCommand(const char* cmd_line, char** plastPwd);
     void Set_Orig_Vals(char **args, int len) {
