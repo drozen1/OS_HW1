@@ -82,8 +82,8 @@ void _removeBackgroundSign(char *cmd_line) {
 
 vector<string> toSeparateTheString(char *cmd_line, char *symbol) {
     char *args[COMMAND_MAX_ARGS];
-    char *copy_cmd_line = const_cast<char *>(cmd_line);
-    const char *const_copy = copy_cmd_line;
+    //char *copy_cmd_line = const_cast<char *>(cmd_line);
+    //const char *const_copy = copy_cmd_line;
 //    int len = _parseCommandLine(const_copy, args);
     vector<string> cmdParsed;
     if (symbol == NULL) {
@@ -103,7 +103,7 @@ vector<string> toSeparateTheString(char *cmd_line, char *symbol) {
         cmdParsed.push_back(symbol);
 
     }
-    else if(len1 == 0 && symbol=="cp"){
+    else if(len1 == 0 && symbol==(char*)"cp"){
         cmdParsed.push_back(symbol);
 
     }
@@ -122,7 +122,7 @@ vector<string> toSeparateTheString(char *cmd_line, char *symbol) {
     int len2 = _parseCommandLine(line.substr(size_symbol + index).c_str(), args);
     string cmd2;
     int i;
-    if (symbol != "timeout" && symbol !="cp") {
+    if (symbol != (char*)"timeout" && symbol !=(char*)"cp") {
         string cmd2 = args[0];
         i = 1;
         while (i < len2) {
@@ -132,14 +132,14 @@ vector<string> toSeparateTheString(char *cmd_line, char *symbol) {
         }
         cmdParsed.push_back(cmd2);
     }
-    if(symbol =="cp"){
+    if(symbol ==(char*)"cp"){
         i=0;
         while (i < len2) {
             cmdParsed.push_back(args[i]);
             i++;
         }
     }
-    if (symbol == "timeout" ) {
+    if (symbol == (char*)"timeout" ) {
         time_string += args[0];
         cmdParsed.push_back(time_string);
         cmd2 = args[1];
@@ -303,7 +303,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                     char check1=args[1][0];
                     bool isNumber2 = string(args[2]).find_first_not_of("-0123456789") == std::string::npos;
                     bool isNumber1 = string(args[1]).find_first_not_of("-0123456789") == std::string::npos;
-                    if('-'!= check1 | !isNumber2| !isNumber1){
+                    if('-'!= check1 || !isNumber2 || !isNumber1){
                         cout << "smash error: kill: invalid arguments\n";
                         return nullptr;
                     }
@@ -358,7 +358,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
             if (pars_string[0] == "chprompt" || pars_string[0] == "showpid" || pars_string[0] == "pwd" ||
                 pars_string[0] == "cd" || pars_string[0] == "jobs" || pars_string[0] == "kill" ||
                 pars_string[0] == "fg" || pars_string[0] == "bg" || pars_string[0] == "quit") {
-                if (symbol == ">" || symbol == ">>") {
+                if (symbol == (char*)">" || symbol == (char*)">>") {
                     //to all the commands
                     int stdout_copy = dup(1);
                     if (stdout_copy == -1) {
@@ -370,7 +370,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                         return nullptr;
                     }
                     int opened = 0;
-                    if (symbol == ">") {
+                    if (symbol == (char*)">") {
                         opened = open(name_of_file, O_WRONLY | O_CREAT | O_TRUNC, 0666);
                     } else { // ">>"
                         opened = open(name_of_file, O_WRONLY | O_CREAT | O_APPEND, 0666);
@@ -394,7 +394,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                     return nullptr;
                 } else {
                     ///built in command but pipe
-                    if (symbol == "|" || symbol == "|&") {
+                    if (symbol == (char*)"|" || symbol == (char*)"|&") {
                         string command1 = pars_string[0];
                         string command2 = pars_string[2];
                         int fd[2];
@@ -487,7 +487,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                             this->front_cmd_pid = pid1;
                             this->there_is_a_process_running_in_the_front = true;
                             this->external_front_cmd = new ExternalCommand(args, len, copy_cmd_line);
-                            time_t curr_time = time(NULL);
+                            time(NULL);
                             int status;
                             check = waitpid(pid1, &status, WUNTRACED);
                             if (check == -1) {
@@ -509,7 +509,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                     }
                 }
             } else {
-                if (symbol == ">" || symbol == "<<") {//not built-in, should fork
+                if (symbol == (char*)">" || symbol == (char*)"<<") {//not built-in, should fork
                     char *copy_cmd_line_to_func2 = const_cast<char *>(pars_string[0].c_str());
 
                     pid_t pid = fork();
@@ -536,7 +536,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                             return nullptr;
                         }
                         int opened = 0;
-                        if (symbol == ">") {
+                        if (symbol == (char*)">") {
                             opened = open(name_of_file, O_WRONLY | O_CREAT | O_TRUNC, 0666);
                         } else { // ">>"
                             opened = open(name_of_file, O_WRONLY | O_CREAT | O_APPEND, 0666);
@@ -728,7 +728,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
 //        }
             if (isBackground) {
                 ///check if timeout with &
-                if (symbol != NULL & symbol == "timeout") {
+                if (symbol != NULL && symbol == (char*)"timeout") {
                     pid_t p = fork();
                     if (p == -1) {
                         perror("smash error: fork failed");
@@ -773,7 +773,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                 pid_t p = fork();
 
                 ///check if timeout
-                if (symbol == "timeout") {
+                if (symbol == (char*)"timeout") {
                     if (p > 0) {
                         string duration_str = args[1];
                         double duration = atof(duration_str.c_str());
@@ -800,9 +800,9 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                     this->there_is_a_process_running_in_the_front = false;
                 } else {
                     if (p == 0) {
-                        if (symbol == "timeout") {
+                        if (symbol == (char*)"timeout") {
                             string copy = "";
-                            for (int i = 2; i < pars_string.size(); ++i) {
+                            for (unsigned int i = 2; i < pars_string.size(); ++i) {
                                 copy += pars_string[i];
                             }
                         }
@@ -847,7 +847,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
         bool newAlarm = false;
         for (vector<JobEntry>::iterator i = this->timeout_list.getVector().begin();
              i != this->timeout_list.getVector().end(); ++i) {
-            int nextAlarm = 0;
+            //int nextAlarm = 0;
             double duration = i->getRunning_time();
             time_t startSeconds = i->getLast_start_time();
             //time_t seconds = timer - (duration + startSeconds);
@@ -945,6 +945,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
     void JobsList::removeFinishedJobs() {
         for (vector<JobEntry>::iterator i = command_vector.begin(); i != command_vector.end(); ++i) {
             if (waitpid(i.operator*().getpid(), NULL, WNOHANG) > 0) {
+                delete i->get_real_command();
                 command_vector.erase(i);
             }
             ///way wh need this????
@@ -959,7 +960,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
         return &command_vector.back();
     }
 
-    JobEntry *JobsList::getJobById(int jobId) {
+    JobEntry *JobsList::getJobById(unsigned int jobId) {
         for (vector<JobEntry>::iterator i = command_vector.begin(); i != command_vector.end(); ++i) {
             unsigned int job_id_iter = i->getJob_id();
             if (job_id_iter == jobId) {
@@ -969,7 +970,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
         return nullptr;
     }
 
-    void JobsList::removeJobById(int jobId) {
+    void JobsList::removeJobById(unsigned int jobId) {
         for (vector<JobEntry>::iterator i = command_vector.begin(); i != command_vector.end(); ++i) {
             unsigned int job_id_iter = i->getJob_id();
             if (job_id_iter == jobId) {
@@ -979,7 +980,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
         }
     }
 
-    void JobsList::fgCommand(int jobId, pid_t *pid_to_update) {
+    void JobsList::fgCommand(unsigned int jobId, pid_t *pid_to_update) {
         //whitout jod id
         if (jobId == 0) {
             pid_t lastJobPId = -1;
@@ -1135,7 +1136,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
         return nullptr;
     }
 
-    void JobsList::bgCommand(int jobId) {
+    void JobsList::bgCommand(unsigned int jobId) {
 //whitout jod id
         if (jobId == 0) {
             int jobIdOfLastJobThatStop = -1;
@@ -1192,7 +1193,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
         removeFinishedJobs();
         for (vector<JobEntry>::iterator i = command_vector.begin();
              i != command_vector.end(); ++i) {
-            unsigned int job_id = i->getJob_id();
+            //unsigned int job_id = i->getJob_id();
             std::string command_name = i->getCommand();
             pid_t pid = i->getpid();
             if (i->getIs_running()) {
@@ -1209,7 +1210,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
     void JobsList::killAllJobs() {
         for (vector<JobEntry>::iterator i = command_vector.begin();
              i != command_vector.end(); ++i) {
-            unsigned int job_id = i->getJob_id();
+            //unsigned int job_id = i->getJob_id();
             kill(i->getpid(), SIGKILL);
 //            this->removeJobById(i->getJob_id());
         }

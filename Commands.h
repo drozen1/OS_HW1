@@ -342,17 +342,17 @@ public:
 
     void removeFinishedJobs();
 
-    JobEntry *getJobById(int jobId);
+    JobEntry *getJobById(unsigned int jobId);
 
     JobEntry *getJobByPid(pid_t Pid);
 
-    void removeJobById(int jobId);
+    void removeJobById(unsigned int jobId);
 
     JobEntry *getLastJob(pid_t  *lastJobPId);
 
-    void fgCommand(int jobId=0,pid_t* pid_to_update=0);
+    void fgCommand(unsigned int jobId=0,pid_t* pid_to_update=0);
 
-    void bgCommand(int jobId=0);
+    void bgCommand(unsigned int jobId=0);
 
     void killCommand(int JobId, int signum);
 
