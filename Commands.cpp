@@ -300,10 +300,16 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
             if (strcmp(name_of_command, key7) == 0) {
                 if (len == 3) {
                     ////check format of signum and jobid
+                    char check1=args[1][0];
+                    if('-'!= check1){
+                        cout << "smash error: kill: invalid arguments\n";
+                        return nullptr;
+                    }
                     char numOfSignal[2] = {args[1][1], args[1][2]};
                     int signum = atoi(numOfSignal);
                     //int signum = args[1][1] - '0';
-                    int job_id = args[2][0] - '0';
+                    char numOfjobid[2] = {args[2][0], args[2][1]};
+                    int job_id = atoi(numOfjobid) ;//- '0';
                     my_job_list.killCommand(job_id, signum);
                 } else {
                     cout << "smash error: kill: invalid arguments\n";
