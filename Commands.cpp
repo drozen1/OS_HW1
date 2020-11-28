@@ -325,7 +325,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                     if (strcmp(arg1, key7) == 0) {
                         cout << "smash: sending SIGKILL signal to " << this->my_job_list.getVector().size()
                              << " jobs:\n";
-                        this->my_job_list.printJobsList();
+                        this->my_job_list.printJobsListForKill();
                         this->my_job_list.killAllJobs();
                         exit(0);
                         return nullptr;
@@ -355,9 +355,14 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
 //                //return an eror
 //            }
             const char *name_of_file = pars_string[2].c_str();
-            if (pars_string[0] == "chprompt" || pars_string[0] == "showpid" || pars_string[0] == "pwd" ||
-                pars_string[0] == "cd" || pars_string[0] == "jobs" || pars_string[0] == "kill" ||
-                pars_string[0] == "fg" || pars_string[0] == "bg" || pars_string[0] == "quit") {
+            char k1[]="chprompt";char k2[]="kill";
+            char k3[]="showpid";char k4[]="pwd";
+            char k5[]= "jobs";char k6[]="fg";char k10[]="quit";
+            char k8[]="cd";char k9[]="bg";
+
+            if (strcmp(k1,args[0]) ==0  ||strcmp(k3,args[0]) ==0  ||strcmp(k4,args[0]) ==0  ||
+                    strcmp(k8,args[0]) ==0  || strcmp(k5,args[0]) ==0  ||strcmp(k2,args[0]) ==0  ||
+                    strcmp(k6,args[0]) ==0  || strcmp(k9,args[0]) ==0 ||strcmp(k10,args[0]) ==0  ) {
                 if (symbol == (char*)">" || symbol == (char*)">>") {
                     //to all the commands
                     int stdout_copy = dup(1);
@@ -509,7 +514,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                     }
                 }
             } else {
-                if (symbol == (char*)">" || symbol == (char*)"<<") {//not built-in, should fork
+                if (symbol == (char*)">" || symbol == (char*)">>") {//not built-in, should fork
                     char *copy_cmd_line_to_func2 = const_cast<char *>(pars_string[0].c_str());
 
                     pid_t pid = fork();
