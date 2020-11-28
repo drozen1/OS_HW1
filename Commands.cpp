@@ -301,7 +301,9 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                 if (len == 3) {
                     ////check format of signum and jobid
                     char check1=args[1][0];
-                    if('-'!= check1){
+                    bool isNumber2 = string(args[2]).find_first_not_of("-0123456789") == std::string::npos;
+                    bool isNumber1 = string(args[1]).find_first_not_of("-0123456789") == std::string::npos;
+                    if('-'!= check1 | !isNumber2| !isNumber1){
                         cout << "smash error: kill: invalid arguments\n";
                         return nullptr;
                     }
@@ -322,7 +324,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                     char *arg1 = args[1];
                     if (strcmp(arg1, key7) == 0) {
                         cout << "smash: sending SIGKILL signal to " << this->my_job_list.getVector().size()
-                             << " jobs\n";
+                             << " jobs:\n";
                         this->my_job_list.killAllJobs();
                         exit(0);
                         return nullptr;
@@ -1087,7 +1089,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
         } else {
             int ret = kill(jobEntry->getpid(), signum);
             if (ret == -1) {
-                cout << "ERROR kill"; ////fix!!
+                perror("smash error: kill failed");
             } else {
                 ///case is stop signal
                 if (signum == SIGSTOP) {
