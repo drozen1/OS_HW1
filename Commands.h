@@ -143,9 +143,9 @@ public:
     virtual ~ChpromptCommand() {}
 
     void changTheString(char **args, int len) {
-        if (len == 2) {
+        if (len >= 2) {
             str = args[1];
-            str += ">";
+            str += "> ";
         } else if (len == 1) {
             str = "smash> ";
         }

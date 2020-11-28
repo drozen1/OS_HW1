@@ -221,7 +221,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
 
     if (len <= 1 + COMMAND_MAX_ARGS) {
         if (symbol == nullptr) {
-            if (len <= 2 && len > 0) {
+            if (len > 0) {
                 char key1[] = "chprompt";
                 if (strcmp(name_of_command, key1) == 0) {
                     call.changTheString(args, len);
