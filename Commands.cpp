@@ -865,7 +865,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
 
     void ShowPidCommand::execute() {
         pid_t t = getpid();
-        std::cout << "smash pid is " << t << "\n";
+        std::cout << "smash pid is " << t << std::endl;
     }
 
 
@@ -915,12 +915,12 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
             double diff_time_stopped = i->getRunning_time();
             pid_t pid = i->getpid();
             if (i->getIs_running()) {
-                cout << "[" << job_id << "] " << command_name << "& : " << pid << " " << diff_time <<" secs " << "\n";
+                cout << "[" << job_id << "] " << command_name << "& : " << pid << " " << diff_time <<" secs" <<  std::endl;
                 //[1] sleep 100& : 30901 18 secs
             } else {
-                cout << "[" << job_id << "] " << command_name << " : " << pid << " " << diff_time_stopped<<" secs "  << " "
+                cout << "[" << job_id << "] " << command_name << " : " << pid << " " << diff_time_stopped<<" secs"  << " "
                      << "(stopped)"
-                     << "\n";
+                     <<  std::endl;
                 //[2] sleep 200 : 30902 11 secs (stopped)
 
             }
@@ -970,7 +970,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
             pid_t lastJobPId = -1;
             pid_t *prtLastJobPId = &lastJobPId;
             if (command_vector.empty()) {
-                cout << "smash error: fg: jobs list is empty" << "\n";
+                cout << "smash error: fg: jobs list is empty" <<  std::endl;
                 return;
             } else {
                 JobEntry *take_this_job_to_foreground = getLastJob(prtLastJobPId);
@@ -978,7 +978,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                 //the last job is BackgroundCommand
                 if (take_this_job_to_foreground->getIs_running()) {
                     cout << take_this_job_to_foreground->getCommand() << "& : " << take_this_job_to_foreground->getpid()
-                         << "\n";
+                         << std::endl;
                 } else {
                     //the last job is foregroundCommand
                     *pid_to_update = take_this_job_to_foreground->getpid();
@@ -987,7 +987,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                     take_this_job_to_foreground->SetIs_running(true);
                     take_this_job_to_foreground->setLast_start_time(curr_time);
                     cout << take_this_job_to_foreground->getCommand() << ": " << take_this_job_to_foreground->getpid()
-                         << "\n";
+                         <<  std::endl;
                 }
                 *pid_to_update = take_this_job_to_foreground->getpid();
                 int status;
@@ -1009,7 +1009,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
             unsigned int job_id_iter = i->getJob_id();
             if (job_id_iter == jobId) {
                 if (i->getIs_running()) {
-                    cout << i->getCommand() << "& : " << i->getpid() << "\n";
+                    cout << i->getCommand() << "& : " << i->getpid() <<  std::endl;
                     waitpid(i->getpid(), nullptr, 0);
                     command_vector.erase(i);
                     return;
@@ -1017,7 +1017,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                 }
                     //the  job is foregroundCommand
                 else if (i->getIs_running() == false) {
-                    cout << i->getCommand() << " : " << i->getpid() << "\n";
+                    cout << i->getCommand() << " : " << i->getpid() <<  std::endl;
                     kill(i->getpid(), SIGCONT);
                     time_t curr_time = time(NULL);
                     i->SetIs_running(true);
@@ -1030,7 +1030,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
 
         }
         //do'nt find this job id
-        cout << "smash error: fg: job-id " << jobId << " does not exist" << "\n";
+        cout << "smash error: fg: job-id " << jobId << " does not exist" <<  std::endl;
     }
 //void JobsList::fgCommand(int jobId) {
 //    //whitout jod id
@@ -1083,7 +1083,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
     void JobsList::killCommand(int JobId, int signum) {
         JobEntry *jobEntry = this->getJobById(JobId);
         if (jobEntry == nullptr) {
-            cout << "smash error: kill: job-id " << JobId << " does not exist\n";
+            cout << "smash error: kill: job-id " << JobId << " does not exist" << std::endl;
         } else {
             int ret = kill(jobEntry->getpid(), signum);
             if (ret == -1) {
@@ -1101,7 +1101,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                     jobEntry->SetIs_running(true);
                     jobEntry->setLast_start_time(curr_time);
                 }
-                cout << "signal number " << signum << " was sent to pid " << jobEntry->getpid() << "\n";
+                cout << "signal number " << signum << " was sent to pid " << jobEntry->getpid() <<  std::endl;
             }
         }
     }
@@ -1126,11 +1126,11 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
             JobEntry *jobEn = getLastStoppedJob(prtJobIdOfLastJobThatStop);
             //not stop job os found
             if (jobEn == nullptr) {
-                cout << "smash error: bg: there is no stopped jobs to resume\n";
+                cout << "smash error: bg: there is no stopped jobs to resume" << std::endl;
                 return;
             } else {
                 //last stop job is found
-                cout << jobEn->getCommand() << ": " << jobEn->getpid() << "\n";
+                cout << jobEn->getCommand() << ": " << jobEn->getpid() << std::endl;
                 kill(jobEn->getpid(), SIGCONT);
                 //the last job is foregroundCommand
                 time_t curr_time = time(NULL);
@@ -1144,10 +1144,10 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                 unsigned int job_id_iter = i->getJob_id();
                 if (job_id_iter == jobId) {
                     if (i->getIs_running()) {
-                        cout << "smash error: bg: job-id " << jobId << " is already running in the background\n";
+                        cout << "smash error: bg: job-id " << jobId << " is already running in the background" <<  std::endl;
                         return;
                     } else {
-                        cout << i->getCommand() << " : " << i->getpid() << "\n";
+                        cout << i->getCommand() << " : " << i->getpid() <<  std::endl;
                         kill(i->getpid(), SIGCONT);
                         time_t curr_time = time(NULL);
                         i->SetIs_running(true);
@@ -1156,7 +1156,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                     }
                 }
             }
-            cout << "smash error: bg: job-id " << jobId << " does not exist\n";
+            cout << "smash error: bg: job-id " << jobId << " does not exist" << std::endl;
 
         }
     }
@@ -1179,9 +1179,9 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
             std::string command_name = i->getCommand();
             pid_t pid = i->getpid();
             if (i->getIs_running()) {
-                cout << pid << ": " << command_name << "\n";
+                cout << pid << ": " << command_name <<  std::endl;
             } else {
-                cout << pid << ": " << command_name << " : " << pid << "&" << "\n";
+                cout << pid << ": " << command_name << " : " << pid << "&" << std::endl;
 
                 //[2] sleep 200 : 30902 11 secs (stopped)
 
@@ -1265,7 +1265,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                     }
                 } else {
                     lastCd=temp;
-                    std::cout << "smash error: cd: OLDPWD not set"<<"\n";
+                    std::cout << "smash error: cd: OLDPWD not set"<< std::endl;
                 }
             } else {
                 int check=chdir(args[1]);
@@ -1278,7 +1278,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
             }
         }
         if (len > 2) {
-            std::cout << "smash error: cd: too many arguments" << "\n";
+            std::cout << "smash error: cd: too many arguments" <<  std::endl;
         }
 
         ///treat case when SYS CALL fail + case of no arg
