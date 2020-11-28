@@ -1244,16 +1244,30 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
             char key[] = "-";
             char *temp = lastCd;
             lastCd = getcwd(NULL, 0);
-
+            if (lastCd==NULL){
+                lastCd=temp;
+                perror("smash error: getcwd failed");
+                return;
+            }
             if (strcmp(args[1], key) == 0) {
                 if (temp != NULL) {
-                    chdir(temp);
+                    int check=chdir(temp);
+                    if(check!=0){
+                        lastCd=temp;
+                        perror("smash error: chdir failed");
+                        return;
+                    }
                 } else {
-                    lastCd =NULL;
+                    lastCd=temp;
                     std::cout << "smash error: cd: OLDPWD not set"<<"\n";
                 }
             } else {
-                chdir(args[1]);
+                int check=chdir(args[1]);
+                if(check!=0){
+                    lastCd=temp;
+                    perror("smash error: chdir failed");
+                    return;
+                }
 
             }
         }
