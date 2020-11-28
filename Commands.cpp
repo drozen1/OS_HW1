@@ -325,6 +325,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                     if (strcmp(arg1, key7) == 0) {
                         cout << "smash: sending SIGKILL signal to " << this->my_job_list.getVector().size()
                              << " jobs:\n";
+                        this->my_job_list.printJobsList();
                         this->my_job_list.killAllJobs();
                         exit(0);
                         return nullptr;
@@ -1210,8 +1211,9 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
              i != command_vector.end(); ++i) {
             unsigned int job_id = i->getJob_id();
             kill(i->getpid(), SIGKILL);
-            this->removeJobById(i->getJob_id());
+//            this->removeJobById(i->getJob_id());
         }
+        command_vector.clear();
 
     }
 
