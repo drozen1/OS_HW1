@@ -909,10 +909,10 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
             double diff_time_stopped = i->getRunning_time();
             pid_t pid = i->getpid();
             if (i->getIs_running()) {
-                cout << "[" << job_id << "] " << command_name << "& : " << pid << " " << diff_time << "\n";
+                cout << "[" << job_id << "] " << command_name << "& : " << pid << " " << diff_time <<" secs " << "\n";
                 //[1] sleep 100& : 30901 18 secs
             } else {
-                cout << "[" << job_id << "] " << command_name << " : " << pid << " " << diff_time_stopped << " "
+                cout << "[" << job_id << "] " << command_name << " : " << pid << " " << diff_time_stopped<<" secs "  << " "
                      << "(stopped)"
                      << "\n";
                 //[2] sleep 200 : 30902 11 secs (stopped)

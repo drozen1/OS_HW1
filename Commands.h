@@ -27,10 +27,11 @@ public:
 
     std::string print_command() {
         std::string ret = "";
-        for (int i = 0; i < len; i++) {
+        for (int i = 0; i < len-1; i++) {
             ret += args[i];
             ret += " ";
         }
+        ret += args[len-1];
         return ret;
     }
     char** get_args(){return args;}
@@ -65,7 +66,7 @@ protected:
 public:
     //ExternalCommand(const char *cmd_line);
     char* get_cmd_line(){return this->cmd_line;}
-    ExternalCommand(char **arg, int len, char *cmd_line) : Command(arg, len), cmd_line(cmd_line) {};
+    ExternalCommand(char **arg, int len, char *cmd_line) : Command(arg, len),cmd_line(cmd_line) {};
 
     virtual ~ExternalCommand() {};
 
