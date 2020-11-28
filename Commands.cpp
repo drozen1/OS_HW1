@@ -893,6 +893,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
         this->pid = pid;
         this->last_start_time = time(NULL);
         this->running_time = 0;
+        stop_with_kill=false;
     }
 
     void JobsList::addJob(Command *cmd, pid_t pid, bool is_running) {
@@ -916,6 +917,17 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
             double diff_time = difftime(curr_time, i->getLast_start_time()) + i->getRunning_time();
             double diff_time_stopped = i->getRunning_time();
             pid_t pid = i->getpid();
+//            int status;
+            bool stop_with_kill=i->getstopWithKill();
+//            if (waitpid(pid, &status, WUNTRACED| WNOHANG) > 0 ){
+//                if(WIFSTOPPED(status)){
+//                    b=true;
+//                }
+//            }
+            if(stop_with_kill){
+                cout << "[" << job_id << "] " << command_name << "& : " << pid << " " << diff_time_stopped <<" secs" <<  std::endl;
+                return;
+            }
             if (i->getIs_running()) {
                 cout << "[" << job_id << "] " << command_name << "& : " << pid << " " << diff_time <<" secs" <<  std::endl;
                 //[1] sleep 100& : 30901 18 secs
@@ -1095,11 +1107,13 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                 if (signum == SIGSTOP) {
                     time_t curr_time = time(NULL);
                     jobEntry->SetIs_running(false);
+                    jobEntry->setstopwithkill(true);
                     jobEntry->set_running_time(
                             jobEntry->getRunning_time() + (difftime(curr_time, jobEntry->getLast_start_time())));
                 }
                 if (signum == 18) {
                     time_t curr_time = time(NULL);
+                    jobEntry->setstopwithkill(false);
                     jobEntry->SetIs_running(true);
                     jobEntry->setLast_start_time(curr_time);
                 }

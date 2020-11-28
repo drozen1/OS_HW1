@@ -261,9 +261,11 @@ class JobEntry {
     pid_t pid;
     char* cmd_line;
     int len_cmd_line;
+    bool stop_with_kill;
 public:
     JobEntry(unsigned int job_id, bool is_running, Command *command, pid_t pid,double running_time);
-
+    bool getstopWithKill(){return this->stop_with_kill;}
+    void setstopwithkill(bool b){stop_with_kill=b;}
     ~JobEntry() {};
 
     unsigned int getJob_id() {

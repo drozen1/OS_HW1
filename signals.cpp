@@ -33,7 +33,7 @@ void ctrlCHandler(int sig_num) {
     cout<<"smash: got ctrl-C"<<"\n";
     if(is_there_a_process){
         kill( pid_to_stop, SIGINT);
-        cout<<"smash: process "<<pid_to_stop<<" was stopped"<<"\n";
+        cout<<"smash: process "<<pid_to_stop<<" was killed"<<"\n";
     }
 }
 
