@@ -931,19 +931,56 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
 //                }
 //            }
             if(stop_with_kill){
-                cout << "[" << job_id << "] " << command_name << "& : " << pid << " " << diff_time_stopped <<" secs" <<  std::endl;
-                return;
+                ////stop with kill
+              //  cout <<"934";
+                if( (typeid(*i->get_real_command())==typeid(BackgroundCommand))) {
+                    cout << "[" << job_id << "] " << command_name << "& : " << pid << " " << diff_time_stopped
+                         << " secs" << std::endl;
+                }
+                else{
+                    cout << "[" << job_id << "] " << command_name << " : " << pid << " " << diff_time_stopped
+                         << " secs" << std::endl;
+                }
+
+            }else {
+                ////runing
+                if (i->getIs_running()) {
+                   // cout <<"946";
+                    if ((typeid(*i->get_real_command()) == typeid(BackgroundCommand))) {
+                        cout << "[" << job_id << "] " << command_name << "& : " << pid << " " << diff_time << " secs"
+                             << std::endl;
+                        //[1] sleep 100& : 30901 18 secs
+                    } else {
+                        cout << "[" << job_id << "] " << command_name << " : " << pid << " " << diff_time << " secs"
+                             << std::endl;
+                    }
+
+                }else{
+               //     cout <<"957";
+               ////stop by ctrl z
+                    if( (typeid(*i->get_real_command())==typeid(BackgroundCommand))){
+                        cout << "[" << job_id << "] " << command_name << "& : " << pid << " " << diff_time_stopped <<" secs" << " "
+                                                                                                                             << "(stopped)"<<  std::endl;
+                    }else{
+                        cout << "[" << job_id << "] " << command_name << " : " << pid << " " << diff_time_stopped<<" secs"  << " "
+                             << "(stopped)"<<  std::endl;
+                    }
+                }
             }
-            if (i->getIs_running()) {
-                cout << "[" << job_id << "] " << command_name << "& : " << pid << " " << diff_time <<" secs" <<  std::endl;
-                //[1] sleep 100& : 30901 18 secs
-            } else {
-                cout << "[" << job_id << "] " << command_name << " : " << pid << " " << diff_time_stopped<<" secs"  << " "
-                     << "(stopped)"
-                     <<  std::endl;
+            //cout <<"958";
+
+//            if(stop_with_kill){
+//                cout << "[" << job_id << "] " << command_name << "& : " << pid << " " << diff_time_stopped <<" secs" <<  std::endl;
+//                return;
+//            }
+//
+//        else {
+        //        cout << "[" << job_id << "] " << command_name << " : " << pid << " " << diff_time_stopped<<" secs"  << " "
+//                     << "(stopped)"
+   //                  <<  std::endl;
                 //[2] sleep 200 : 30902 11 secs (stopped)
 
-            }
+      //      }
         }
     }
 
@@ -1018,7 +1055,6 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                     take_this_job_to_foreground->set_running_time(take_this_job_to_foreground->getRunning_time() +
                                                                   difftime(time(NULL),
                                                                            take_this_job_to_foreground->getLast_start_time()));
-
                 } else {
                     removeJobById(command_vector.back().getJob_id());
                 }
@@ -1030,21 +1066,42 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
             unsigned int job_id_iter = i->getJob_id();
             if (job_id_iter == jobId) {
                 if (i->getIs_running()) {
+                    *pid_to_update = i->getpid();
                     cout << i->getCommand() << "& : " << i->getpid() <<  std::endl;
-                    waitpid(i->getpid(), nullptr, 0);
-                    command_vector.erase(i);
+                    int status;
+                    waitpid(i->getpid(), &status, WUNTRACED);
+                    if (WIFSTOPPED(status)) {
+                        i->SetIs_running(false);
+                        i->set_running_time(i->getRunning_time() +
+                                                                      difftime(time(NULL),
+                                                                              i->getLast_start_time()));
+
+                    } else {
+                        command_vector.erase(i);
+                    }
+
                     return;
 
                 }
                     //the  job is foregroundCommand
                 else if (i->getIs_running() == false) {
                     cout << i->getCommand() << " : " << i->getpid() <<  std::endl;
+                    *pid_to_update = i->getpid();
                     kill(i->getpid(), SIGCONT);
                     time_t curr_time = time(NULL);
                     i->SetIs_running(true);
                     i->setLast_start_time(curr_time);
-                    waitpid(i->getpid(), nullptr, 0);
-                    command_vector.erase(i);
+                    int status;
+                    waitpid(i->getpid(), &status, WUNTRACED);
+                    if (WIFSTOPPED(status)) {
+                        i->SetIs_running(false);
+                        i->set_running_time(i->getRunning_time() +
+                                            difftime(time(NULL),
+                                                     i->getLast_start_time()));
+
+                    } else {
+                        command_vector.erase(i);
+                    }
                     return;
                 }
             }
@@ -1201,10 +1258,11 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
             //unsigned int job_id = i->getJob_id();
             std::string command_name = i->getCommand();
             pid_t pid = i->getpid();
-            if (i->getIs_running()) {
+            if ((typeid(*i->get_real_command()) != typeid(BackgroundCommand))) {
+//            if (i->getIs_running()) {
                 cout << pid << ": " << command_name <<  std::endl;
             } else {
-                cout << pid << ": " << command_name << " : " << pid << "&" << std::endl;
+                cout << pid << ": " << command_name << "&" << std::endl;
 
                 //[2] sleep 200 : 30902 11 secs (stopped)
 

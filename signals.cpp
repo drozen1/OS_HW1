@@ -10,10 +10,11 @@ void ctrlZHandler(int sig_num) {
     SmallShell &smash = SmallShell::getInstance();
     bool is_there_a_process=smash.getBool();
     pid_t pid_to_stop=smash.getFront_cmd_pid();
-    cout<<"smash: got ctrl-Z"<<"\n";
+    cout<<"smash: got ctrl-Z"<<std::endl;
     if(is_there_a_process){
             kill( pid_to_stop, SIGSTOP);
-            cout<<"smash: process "<<pid_to_stop<<" was stopped"<<"\n";
+            cout<<"smash: process "<<pid_to_stop<<" was stopped"<<std::endl;
+            smash.set_there_is_a_process_running_in_the_front(false);
     }
     return;
 }
@@ -30,10 +31,10 @@ void ctrlCHandler(int sig_num) {
     SmallShell &smash = SmallShell::getInstance();
     bool is_there_a_process=smash.getBool();
     pid_t pid_to_stop=smash.getFront_cmd_pid();
-    cout<<"smash: got ctrl-C"<<"\n";
+    cout<<"smash: got ctrl-C"<<std::endl;
     if(is_there_a_process){
         kill( pid_to_stop, SIGINT);
-        cout<<"smash: process "<<pid_to_stop<<" was killed"<<"\n";
+        cout<<"smash: process "<<pid_to_stop<<" was killed"<<std::endl;
     }
 }
 

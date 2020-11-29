@@ -12,6 +12,7 @@
 #include<sys/types.h>
 #include<sys/stat.h>
 #include <fcntl.h>
+#include <typeinfo>
 
 #define COMMAND_ARGS_MAX_LENGTH (200)
 #define COMMAND_MAX_ARGS (20)
@@ -395,6 +396,9 @@ private:
     SmallShell();
 
 public:
+    void set_there_is_a_process_running_in_the_front(bool b){
+        there_is_a_process_running_in_the_front=b;
+    }
 
     Command *CreateCommand(const char *cmd_line, ChpromptCommand &call, ChangeDirCommand &cd);
     JobsList& getJobList(){
