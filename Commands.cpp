@@ -1040,7 +1040,7 @@ void JobsList::fgCommand(unsigned int jobId, pid_t *pid_to_update) {
                 cout << take_this_job_to_foreground->getCommand() << "& : " << take_this_job_to_foreground->getpid()
                      << std::endl;
             } else {
-                cout << take_this_job_to_foreground->getCommand() << ": " << take_this_job_to_foreground->getpid()
+                cout << take_this_job_to_foreground->getCommand() << " : " << take_this_job_to_foreground->getpid()
                      << std::endl;
             }
                 //the last job is foregroundCommand
