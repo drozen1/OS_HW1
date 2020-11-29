@@ -102,10 +102,12 @@ vector<string> toSeparateTheString(char *cmd_line, char *symbol) {
         cmdParsed.push_back(cmd1);
         cmdParsed.push_back(symbol);
 
-    } else if (len1 == 0 && symbol == (char *) "cp") {
+    }
+    else if(len1 == 0 && symbol==(char*)"cp"){
         cmdParsed.push_back(symbol);
 
-    } else {
+    }
+    else {
         time_string = symbol;
         time_string += " ";
 
@@ -120,7 +122,7 @@ vector<string> toSeparateTheString(char *cmd_line, char *symbol) {
     int len2 = _parseCommandLine(line.substr(size_symbol + index).c_str(), args);
     string cmd2;
     int i;
-    if (symbol != (char *) "timeout" && symbol != (char *) "cp") {
+    if (symbol != (char*)"timeout" && symbol !=(char*)"cp") {
         string cmd2 = args[0];
         i = 1;
         while (i < len2) {
@@ -130,14 +132,14 @@ vector<string> toSeparateTheString(char *cmd_line, char *symbol) {
         }
         cmdParsed.push_back(cmd2);
     }
-    if (symbol == (char *) "cp") {
-        i = 0;
+    if(symbol ==(char*)"cp"){
+        i=0;
         while (i < len2) {
             cmdParsed.push_back(args[i]);
             i++;
         }
     }
-    if (symbol == (char *) "timeout") {
+    if (symbol == (char*)"timeout" ) {
         time_string += args[0];
         cmdParsed.push_back(time_string);
         cmd2 = args[1];
@@ -298,10 +300,10 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
             if (strcmp(name_of_command, key7) == 0) {
                 if (len == 3) {
                     ////check format of signum and jobid
-                    char check1 = args[1][0];
+                    char check1=args[1][0];
                     bool isNumber2 = string(args[2]).find_first_not_of("-0123456789") == std::string::npos;
                     bool isNumber1 = string(args[1]).find_first_not_of("-0123456789") == std::string::npos;
-                    if ('-' != check1 || !isNumber2 || !isNumber1) {
+                    if('-'!= check1 || !isNumber2 || !isNumber1){
                         cout << "smash error: kill: invalid arguments\n";
                         return nullptr;
                     }
@@ -309,7 +311,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                     int signum = atoi(numOfSignal);
                     //int signum = args[1][1] - '0';
                     char numOfjobid[2] = {args[2][0], args[2][1]};
-                    int job_id = atoi(numOfjobid);//- '0';
+                    int job_id = atoi(numOfjobid) ;//- '0';
                     my_job_list.killCommand(job_id, signum);
                 } else {
                     cout << "smash error: kill: invalid arguments\n";
@@ -353,27 +355,18 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
 //                //return an eror
 //            }
             const char *name_of_file = pars_string[2].c_str();
-            char k1[] = "chprompt";
-            char k2[] = "kill";
-            char k3[] = "showpid";
-            char k4[] = "pwd";
-            char k5[] = "jobs";
-            char k6[] = "fg";
-            char k10[] = "quit";
-            char k8[] = "cd";
-            char k9[] = "bg";
+            char k1[]="chprompt";char k2[]="kill";
+            char k3[]="showpid";char k4[]="pwd";
+            char k5[]= "jobs";char k6[]="fg";char k10[]="quit";
+            char k8[]="cd";char k9[]="bg";
 
-            if (strcmp(k1, args[0]) == 0 || strcmp(k3, args[0]) == 0 || strcmp(k4, args[0]) == 0 ||
-                strcmp(k8, args[0]) == 0 || strcmp(k5, args[0]) == 0 || strcmp(k2, args[0]) == 0 ||
-                strcmp(k6, args[0]) == 0 || strcmp(k9, args[0]) == 0 || strcmp(k10, args[0]) == 0 ||
-                (name_of_file != NULL && (
-                        strcmp(k1, name_of_file) == 0 || strcmp(k3, name_of_file) == 0 ||
-                        strcmp(k4, name_of_file) == 0 ||
-                        strcmp(k8, name_of_file) == 0 || strcmp(k5, name_of_file) == 0 ||
-                        strcmp(k2, name_of_file) == 0 ||
-                        strcmp(k6, name_of_file) == 0 || strcmp(k9, name_of_file) == 0 ||
-                        strcmp(k10, name_of_file) == 0))) {
-                if (symbol == (char *) ">" || symbol == (char *) ">>") {
+            if (strcmp(k1,args[0]) ==0  ||strcmp(k3,args[0]) ==0  ||strcmp(k4,args[0]) ==0  ||
+                strcmp(k8,args[0]) ==0  || strcmp(k5,args[0]) ==0  ||strcmp(k2,args[0]) ==0  ||
+                strcmp(k6,args[0]) ==0  || strcmp(k9,args[0]) ==0 ||strcmp(k10,args[0]) ==0 || (name_of_file!=NULL &&(
+                        strcmp(k1,name_of_file) ==0  ||strcmp(k3,name_of_file) ==0  ||strcmp(k4,name_of_file) ==0  ||
+                        strcmp(k8,name_of_file) ==0  || strcmp(k5,name_of_file) ==0  ||strcmp(k2,name_of_file) ==0  ||
+                        strcmp(k6,name_of_file) ==0  || strcmp(k9,name_of_file) ==0 ||strcmp(k10,name_of_file) ==0) ) ) {
+                if (symbol == (char*)">" || symbol == (char*)">>") {
                     //to all the commands
                     int stdout_copy = dup(1);
                     if (stdout_copy == -1) {
@@ -385,7 +378,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                         return nullptr;
                     }
                     int opened = 0;
-                    if (symbol == (char *) ">") {
+                    if (symbol == (char*)">") {
                         opened = open(name_of_file, O_WRONLY | O_CREAT | O_TRUNC, 0666);
                     } else { // ">>"
                         opened = open(name_of_file, O_WRONLY | O_CREAT | O_APPEND, 0666);
@@ -409,7 +402,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                     return nullptr;
                 } else {
                     ///built in command but pipe
-                    if (symbol == (char *) "|" || symbol == (char *) "|&") {
+                    if (symbol == (char*)"|" || symbol == (char*)"|&") {
                         string command1 = pars_string[0];
                         string command2 = pars_string[2];
                         int fd[2];
@@ -524,7 +517,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                     }
                 }
             } else {
-                if (symbol == (char *) ">" || symbol == (char *) ">>") {//not built-in, should fork
+                if (symbol == (char*)">" || symbol == (char*)">>") {//not built-in, should fork
                     char *copy_cmd_line_to_func2 = const_cast<char *>(pars_string[0].c_str());
 
                     pid_t pid = fork();
@@ -551,7 +544,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                             return nullptr;
                         }
                         int opened = 0;
-                        if (symbol == (char *) ">") {
+                        if (symbol == (char*)">") {
                             opened = open(name_of_file, O_WRONLY | O_CREAT | O_TRUNC, 0666);
                         } else { // ">>"
                             opened = open(name_of_file, O_WRONLY | O_CREAT | O_APPEND, 0666);
@@ -616,7 +609,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                 }
                 //cp command
 
-                if (symbol == is_cp) {
+                if (symbol ==is_cp) {
                     char *copy_cmd_line_to_func3 = const_cast<char *>(pars_string[0].c_str());
                     if (pars_string.size() < 3) {
                         cerr << "smash error: cp: invalid arguments" << endl;
@@ -647,12 +640,12 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                         }
 
                         int check;
-                        len = pars_string[1].size()+1;
-                        strcpy(file1, pars_string[1].c_str());
-                        file1[len-1] = 0;
-                        len = pars_string[2].size()+1;
-                        strcpy(file2, pars_string[2].c_str());
-                        file2[len-1] = 0;
+//                        len = pars_string[1].size()+1;
+//                        strcpy(file1, pars_string[1].c_str());
+//                        file1[len-1] = 0;
+//                        len = pars_string[2].size()+1;
+//                        strcpy(file2, pars_string[2].c_str());
+//                        file2[len-1] = 0;
 
                         int opened1 = open(file1, O_RDONLY, 0666);
                         if (opened1 == -1) {
@@ -705,34 +698,16 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                             cout << "smash: " << file1 << " was copied to " << file2 << endl;
 
                             exit(0);
-                        }if (pid>0) {
-
-                            if (isBackground) { //papa isBackground
-                                ExternalCommand *external_command_in_cp = new ExternalCommand(args, len,
-                                                                                              copy_cmd_line_to_func3);
-                                my_job_list.addJob(external_command_in_cp, pid, true);
+                        } else if (isBackground) { //papa isBackground
+                            ExternalCommand *external_command_in_cp = new ExternalCommand(args, len,
+                                                                                          copy_cmd_line_to_func3);
+                            my_job_list.addJob(external_command_in_cp, pid, true);
 
 
-                            } else {//frontgroundCommand father shood wait
-
-                                this->front_cmd_pid = pid;
-                                this->there_is_a_process_running_in_the_front = true;
-                                this->external_front_cmd = new ExternalCommand(args, len, copy_cmd_line);
-                                time_t curr_time = time(NULL);
-                                int status;
-                                waitpid(pid, &status, WUNTRACED);
-                                if (WIFSTOPPED(status)) {
-                                    my_job_list.addJob(external_front_cmd, pid, false);
-                                    JobEntry *jobEntry = my_job_list.getJobByPid(pid);
-                                    jobEntry->set_running_time(jobEntry->getRunning_time() +
-                                                               difftime(time(NULL), curr_time));
-                                    jobEntry->setstopwithkill(false);
-
-                                }
-                                //delte args
-                                //this->there_is_a_process_running_in_the_front = false;
-
-                            }
+                        } else {//frontgroundCommand father shood wait
+                            int status;
+                            ///chack if getpid is work
+                            waitpid(pid, &status, WUNTRACED);
                         }
 
                     } else { //the big idf was faild
@@ -761,7 +736,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
 //        }
         if (isBackground) {
             ///check if timeout with &
-            if (symbol != NULL && symbol == (char *) "timeout") {
+            if (symbol != NULL && symbol == (char*)"timeout") {
                 pid_t p = fork();
                 if (p == -1) {
                     perror("smash error: fork failed");
@@ -806,7 +781,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
             pid_t p = fork();
 
             ///check if timeout
-            if (symbol == (char *) "timeout") {
+            if (symbol == (char*)"timeout") {
                 if (p > 0) {
                     string duration_str = args[1];
                     double duration = atof(duration_str.c_str());
@@ -831,11 +806,11 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                     jobEntry->setstopwithkill(false);
                 }
                 //delte args
-                //this->there_is_a_process_running_in_the_front = false;
+                this->there_is_a_process_running_in_the_front = false;
 
             } else {
                 if (p == 0) {
-                    if (symbol == (char *) "timeout") {
+                    if (symbol == (char*)"timeout") {
                         string copy = "";
                         for (unsigned int i = 2; i < pars_string.size(); ++i) {
                             copy += pars_string[i];
@@ -902,12 +877,12 @@ void SmallShell::set_alarm() {
 }
 
 void ShowPidCommand::execute() {
-    SmallShell &smash = SmallShell::getInstance();
+    SmallShell& smash = SmallShell::getInstance();
     std::cout << "smash pid is " << smash.shell_pid << std::endl;
 }
 
 
-Command::Command(char **args, int
+Command::Command(char * *args, int
 len) {
     ///to do:to chang args
     this->args = new char *[len];
@@ -920,7 +895,7 @@ len) {
 
 JobEntry::JobEntry(unsigned int
                    job_id, bool
-                   is_running, Command *command, pid_t
+                   is_running, Command * command, pid_t
                    pid, double
                    running_time = 0) {
     this->is_running = is_running;
@@ -929,7 +904,7 @@ JobEntry::JobEntry(unsigned int
     this->pid = pid;
     this->last_start_time = time(NULL);
     this->running_time = 0;
-    stop_with_kill = false;
+    stop_with_kill=false;
 }
 
 void JobsList::addJob(Command *cmd, pid_t pid, bool is_running) {
@@ -954,23 +929,24 @@ void JobsList::printJobsList() {
         double diff_time_stopped = i->getRunning_time();
         pid_t pid = i->getpid();
 //            int status;
-        bool stop_with_kill = i->getstopWithKill();
+        bool stop_with_kill=i->getstopWithKill();
 //            if (waitpid(pid, &status, WUNTRACED| WNOHANG) > 0 ){
 //                if(WIFSTOPPED(status)){
 //                    b=true;
 //                }
 //            }
-        if (stop_with_kill) {
+        if(stop_with_kill){
             ////stop with kill
-            if ((typeid(*i->get_real_command()) == typeid(BackgroundCommand))) {
+            if( (typeid(*i->get_real_command())==typeid(BackgroundCommand))) {
                 cout << "[" << job_id << "] " << command_name << "& : " << pid << " " << diff_time_stopped
                      << " secs" << std::endl;
-            } else {
+            }
+            else{
                 cout << "[" << job_id << "] " << command_name << " : " << pid << " " << diff_time_stopped
                      << " secs" << std::endl;
             }
 
-        } else {
+        }else {
             ////runing
             if (i->getIs_running()) {
                 if ((typeid(*i->get_real_command()) == typeid(BackgroundCommand))) {
@@ -982,16 +958,14 @@ void JobsList::printJobsList() {
                          << std::endl;
                 }
 
-            } else {
+            }else{
                 ////stop by ctrl z
-                if ((typeid(*i->get_real_command()) == typeid(BackgroundCommand))) {
-                    cout << "[" << job_id << "] " << command_name << "& : " << pid << " " << diff_time_stopped
-                         << " secs" << " "
-                         << "(stopped)" << std::endl;
-                } else {
-                    cout << "[" << job_id << "] " << command_name << " : " << pid << " " << diff_time_stopped << " secs"
-                         << " "
-                         << "(stopped)" << std::endl;
+                if( (typeid(*i->get_real_command())==typeid(BackgroundCommand))){
+                    cout << "[" << job_id << "] " << command_name << "& : " << pid << " " << diff_time_stopped <<" secs" << " "
+                         << "(stopped)"<<  std::endl;
+                }else{
+                    cout << "[" << job_id << "] " << command_name << " : " << pid << " " << diff_time_stopped<<" secs"  << " "
+                         << "(stopped)"<<  std::endl;
                 }
             }
         }
@@ -1056,26 +1030,26 @@ void JobsList::fgCommand(unsigned int jobId, pid_t *pid_to_update) {
         pid_t lastJobPId = -1;
         pid_t *prtLastJobPId = &lastJobPId;
         if (command_vector.empty()) {
-            cout << "smash error: fg: jobs list is empty" << std::endl;
+            cout << "smash error: fg: jobs list is empty" <<  std::endl;
             return;
         } else {
             JobEntry *take_this_job_to_foreground = getLastJob(prtLastJobPId);
             *pid_to_update = take_this_job_to_foreground->getpid();
             //the last job is BackgroundCommand
-            if (take_this_job_to_foreground->getIs_running()) {
+            if ((typeid(*take_this_job_to_foreground->get_real_command()) == typeid(BackgroundCommand))){
                 cout << take_this_job_to_foreground->getCommand() << "& : " << take_this_job_to_foreground->getpid()
                      << std::endl;
             } else {
+                cout << take_this_job_to_foreground->getCommand() << ": " << take_this_job_to_foreground->getpid()
+                     << std::endl;
+            }
                 //the last job is foregroundCommand
                 *pid_to_update = take_this_job_to_foreground->getpid();
                 kill(take_this_job_to_foreground->getpid(), SIGCONT);
                 time_t curr_time = time(NULL);
                 take_this_job_to_foreground->SetIs_running(true);
                 take_this_job_to_foreground->setLast_start_time(curr_time);
-                cout << take_this_job_to_foreground->getCommand() << ": " << take_this_job_to_foreground->getpid()
-                     << std::endl;
-            }
-            *pid_to_update = take_this_job_to_foreground->getpid();
+
             int status;
             waitpid(*prtLastJobPId, &status, WUNTRACED);
             if (WIFSTOPPED(status)) {
@@ -1094,9 +1068,13 @@ void JobsList::fgCommand(unsigned int jobId, pid_t *pid_to_update) {
     for (vector<JobEntry>::iterator i = command_vector.begin(); i != command_vector.end(); ++i) {
         unsigned int job_id_iter = i->getJob_id();
         if (job_id_iter == jobId) {
-            if (i->getIs_running()) {
+            if ((typeid(*i->get_real_command()) == typeid(BackgroundCommand))){
                 *pid_to_update = i->getpid();
-                cout << i->getCommand() << "& : " << i->getpid() << std::endl;
+                kill(i->getpid(), SIGCONT);
+                time_t curr_time = time(NULL);
+                i->SetIs_running(true);
+                i->setLast_start_time(curr_time);
+                cout << i->getCommand() << "& : " << i->getpid() <<  std::endl;
                 int status;
                 waitpid(i->getpid(), &status, WUNTRACED);
                 if (WIFSTOPPED(status)) {
@@ -1113,8 +1091,9 @@ void JobsList::fgCommand(unsigned int jobId, pid_t *pid_to_update) {
 
             }
                 //the  job is foregroundCommand
-            else if (i->getIs_running() == false) {
-                cout << i->getCommand() << " : " << i->getpid() << std::endl;
+            else
+                if ((typeid(*i->get_real_command()) != typeid(BackgroundCommand))) {
+                    cout << i->getCommand() << " : " << i->getpid() << std::endl;
                 *pid_to_update = i->getpid();
                 kill(i->getpid(), SIGCONT);
                 time_t curr_time = time(NULL);
@@ -1138,7 +1117,7 @@ void JobsList::fgCommand(unsigned int jobId, pid_t *pid_to_update) {
 
     }
     //do'nt find this job id
-    cout << "smash error: fg: job-id " << jobId << " does not exist" << std::endl;
+    cout << "smash error: fg: job-id " << jobId << " does not exist" <<  std::endl;
 }
 //void JobsList::fgCommand(int jobId) {
 //    //whitout jod id
@@ -1211,7 +1190,7 @@ void JobsList::killCommand(int JobId, int signum) {
                 jobEntry->SetIs_running(true);
                 jobEntry->setLast_start_time(curr_time);
             }
-            cout << "signal number " << signum << " was sent to pid " << jobEntry->getpid() << std::endl;
+            cout << "signal number " << signum << " was sent to pid " << jobEntry->getpid() <<  std::endl;
         }
     }
 }
@@ -1240,7 +1219,12 @@ void JobsList::bgCommand(unsigned int jobId) {
             return;
         } else {
             //last stop job is found
-            cout << jobEn->getCommand() << ": " << jobEn->getpid() << std::endl;
+            if ((typeid(*jobEn->get_real_command()) != typeid(BackgroundCommand))) {
+                cout << jobEn->getCommand() << " : " << jobEn->getpid() << std::endl;
+            }
+            else{
+                cout << jobEn->getCommand() << "&: " << jobEn->getpid() << std::endl;
+            }
             kill(jobEn->getpid(), SIGCONT);
             //the last job is foregroundCommand
             time_t curr_time = time(NULL);
@@ -1255,10 +1239,10 @@ void JobsList::bgCommand(unsigned int jobId) {
             unsigned int job_id_iter = i->getJob_id();
             if (job_id_iter == jobId) {
                 if (i->getIs_running()) {
-                    cout << "smash error: bg: job-id " << jobId << " is already running in the background" << std::endl;
+                    cout << "smash error: bg: job-id " << jobId << " is already running in the background" <<  std::endl;
                     return;
                 } else {
-                    cout << i->getCommand() << " : " << i->getpid() << std::endl;
+                    cout << i->getCommand() << " : " << i->getpid() <<  std::endl;
                     kill(i->getpid(), SIGCONT);
                     time_t curr_time = time(NULL);
                     i->setstopwithkill(false);
@@ -1292,7 +1276,7 @@ void JobsList::printJobsListForKill() {
         pid_t pid = i->getpid();
         if ((typeid(*i->get_real_command()) != typeid(BackgroundCommand))) {
 //            if (i->getIs_running()) {
-            cout << pid << ": " << command_name << std::endl;
+            cout << pid << ": " << command_name <<  std::endl;
         } else {
             cout << pid << ": " << command_name << "&" << std::endl;
 
@@ -1364,27 +1348,27 @@ void ChangeDirCommand::execute() {
         char key[] = "-";
         char *temp = lastCd;
         lastCd = getcwd(NULL, 0);
-        if (lastCd == NULL) {
-            lastCd = temp;
+        if (lastCd==NULL){
+            lastCd=temp;
             perror("smash error: getcwd failed");
             return;
         }
         if (strcmp(args[1], key) == 0) {
             if (temp != NULL) {
-                int check = chdir(temp);
-                if (check != 0) {
-                    lastCd = temp;
+                int check=chdir(temp);
+                if(check!=0){
+                    lastCd=temp;
                     perror("smash error: chdir failed");
                     return;
                 }
             } else {
-                lastCd = temp;
-                std::cout << "smash error: cd: OLDPWD not set" << std::endl;
+                lastCd=temp;
+                std::cout << "smash error: cd: OLDPWD not set"<< std::endl;
             }
         } else {
-            int check = chdir(args[1]);
-            if (check != 0) {
-                lastCd = temp;
+            int check=chdir(args[1]);
+            if(check!=0){
+                lastCd=temp;
                 perror("smash error: chdir failed");
                 return;
             }
@@ -1392,7 +1376,7 @@ void ChangeDirCommand::execute() {
         }
     }
     if (len > 2) {
-        std::cout << "smash error: cd: too many arguments" << std::endl;
+        std::cout << "smash error: cd: too many arguments" <<  std::endl;
     }
 
     ///treat case when SYS CALL fail + case of no arg
@@ -1439,8 +1423,9 @@ void ForegroundCommand::execute() {
 }
 
 
-BackgroundCommand::BackgroundCommand(char **arg, int
-len, char *cmd_line) : ExternalCommand(arg, len, cmd_line) {
+BackgroundCommand::BackgroundCommand(char * *arg, int
+len, char * cmd_line) : ExternalCommand(arg, len, cmd_line)
+{
     pid_t p = fork();
     ///to do:to understand hoe to get the time in this function
     //start_time=time();
