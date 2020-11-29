@@ -291,7 +291,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                     } else {
                         ///chack if to return error because we get job id<0 and not valid.
 
-                        cout << "smash error: fg: job-id " << atoi(args[1]) << " does not exist\n";
+                        cout << "smash error: bg: job-id " << atoi(args[1]) << " does not exist\n";
                     }
                 }
                 return nullptr;
