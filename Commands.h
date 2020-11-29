@@ -395,7 +395,9 @@ private:
     ExternalCommand* external_front_cmd;
     SmallShell();
 
+
 public:
+    pid_t shell_pid;
     void set_there_is_a_process_running_in_the_front(bool b){
         there_is_a_process_running_in_the_front=b;
     }

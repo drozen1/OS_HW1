@@ -8,6 +8,7 @@
 int main(int argc, char *argv[]) {
 
     SmallShell &smash = SmallShell::getInstance();
+    smash.shell_pid=getpid();
     //JobsList jobsList=smash.getJobList().killCommand();
     if(signal(SIGTSTP , ctrlZHandler)==SIG_ERR) {
         perror("smash error: failed to set ctrl-Z handler");
