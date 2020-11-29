@@ -803,6 +803,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                     JobEntry *jobEntry = my_job_list.getJobByPid(p);
                     jobEntry->set_running_time(jobEntry->getRunning_time() +
                                                difftime(time(NULL), curr_time));
+                    jobEntry->setstopwithkill(false);
                 }
                 //delte args
                 this->there_is_a_process_running_in_the_front = false;
@@ -935,7 +936,6 @@ void JobsList::printJobsList() {
 //            }
         if(stop_with_kill){
             ////stop with kill
-            //  cout <<"934";
             if( (typeid(*i->get_real_command())==typeid(BackgroundCommand))) {
                 cout << "[" << job_id << "] " << command_name << "& : " << pid << " " << diff_time_stopped
                      << " secs" << std::endl;
@@ -948,7 +948,6 @@ void JobsList::printJobsList() {
         }else {
             ////runing
             if (i->getIs_running()) {
-                // cout <<"946";
                 if ((typeid(*i->get_real_command()) == typeid(BackgroundCommand))) {
                     cout << "[" << job_id << "] " << command_name << "& : " << pid << " " << diff_time << " secs"
                          << std::endl;
@@ -959,7 +958,6 @@ void JobsList::printJobsList() {
                 }
 
             }else{
-                //     cout <<"957";
                 ////stop by ctrl z
                 if( (typeid(*i->get_real_command())==typeid(BackgroundCommand))){
                     cout << "[" << job_id << "] " << command_name << "& : " << pid << " " << diff_time_stopped <<" secs" << " "
@@ -1058,6 +1056,7 @@ void JobsList::fgCommand(unsigned int jobId, pid_t *pid_to_update) {
                 take_this_job_to_foreground->set_running_time(take_this_job_to_foreground->getRunning_time() +
                                                               difftime(time(NULL),
                                                                        take_this_job_to_foreground->getLast_start_time()));
+                take_this_job_to_foreground->setstopwithkill(false);
             } else {
                 removeJobById(command_vector.back().getJob_id());
             }
@@ -1078,7 +1077,7 @@ void JobsList::fgCommand(unsigned int jobId, pid_t *pid_to_update) {
                     i->set_running_time(i->getRunning_time() +
                                         difftime(time(NULL),
                                                  i->getLast_start_time()));
-
+                    i->setstopwithkill(false);
                 } else {
                     command_vector.erase(i);
                 }
@@ -1101,6 +1100,7 @@ void JobsList::fgCommand(unsigned int jobId, pid_t *pid_to_update) {
                     i->set_running_time(i->getRunning_time() +
                                         difftime(time(NULL),
                                                  i->getLast_start_time()));
+                    i->setstopwithkill(false);
 
                 } else {
                     command_vector.erase(i);

@@ -15,6 +15,8 @@ void ctrlZHandler(int sig_num) {
             kill( pid_to_stop, SIGSTOP);
             cout<<"smash: process "<<pid_to_stop<<" was stopped"<<std::endl;
             smash.set_there_is_a_process_running_in_the_front(false);
+//            JobEntry* job_entry=smash.getJobList().getJobByPid()
+//            setstopwithkill(false);
     }
     return;
 }
