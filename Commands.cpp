@@ -807,6 +807,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                 }
                 //delte args
                 this->there_is_a_process_running_in_the_front = false;
+
             } else {
                 if (p == 0) {
                     if (symbol == (char*)"timeout") {
