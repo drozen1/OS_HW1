@@ -1214,6 +1214,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                 kill(jobEn->getpid(), SIGCONT);
                 //the last job is foregroundCommand
                 time_t curr_time = time(NULL);
+                jobEn->setstopwithkill(false);
                 jobEn->SetIs_running(true);
                 jobEn->setLast_start_time(curr_time);
                 return;
@@ -1230,6 +1231,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                         cout << i->getCommand() << " : " << i->getpid() <<  std::endl;
                         kill(i->getpid(), SIGCONT);
                         time_t curr_time = time(NULL);
+                        i->setstopwithkill(false);
                         i->SetIs_running(true);
                         i->setLast_start_time(curr_time);
                         return;
