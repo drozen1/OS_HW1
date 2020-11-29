@@ -291,7 +291,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                     } else {
                         ///chack if to return error because we get job id<0 and not valid.
 
-                        cout << "smash error: fg: job-id " << atoi(args[1]) << " does not exist\n";
+                        cout << "smash error: bg: job-id " << atoi(args[1]) << " does not exist\n";
                     }
                 }
                 return nullptr;
@@ -342,11 +342,11 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
         }
 
 /// >>, >   linoy start
-
-        if (len > 5) {
-            cerr << "smash error: invalid arguments" << endl;
-            return nullptr;
-        }
+//
+//        if (len > 5) {
+//            cerr << "smash error: invalid arguments" << endl;
+//            return nullptr;
+//        }
         vector<string> pars_string;
         if (symbol != NULL) {
             pars_string = toSeparateTheString(copy_cmd_line, symbol);
@@ -610,19 +610,19 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                 //cp command
 
                 if (symbol ==is_cp) {
-                    char *copy_cmd_line_to_func3 = const_cast<char *>(pars_string[0].c_str());
+//                    char *copy_cmd_line_to_func3 = const_cast<char *>(pars_string[0].c_str());
                     if (pars_string.size() < 3) {
                         cerr << "smash error: cp: invalid arguments" << endl;
                         return nullptr;
                     }
-                    int len = pars_string[1].size() + 1;
-                    char file1[len];
+                    int len_t = pars_string[1].size() + 1;
+                    char file1[len_t];
                     strcpy(file1, pars_string[1].c_str());
-                    file1[len - 1] = 0;
-                    len = pars_string[2].size() + 1;
-                    char file2[len];
+                    file1[len_t - 1] = 0;
+                    len_t = pars_string[2].size() + 1;
+                    char file2[len_t];
                     strcpy(file2, pars_string[2].c_str());
-                    file2[len - 1] = 0;
+                    file2[len_t - 1] = 0;
 
                     char buf[PATH_MAX];
                     char buf2[PATH_MAX];
@@ -700,7 +700,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                             exit(0);
                         } else if (isBackground) { //papa isBackground
                             ExternalCommand *external_command_in_cp = new ExternalCommand(args, len,
-                                                                                          copy_cmd_line_to_func3);
+                                                                                          copy_cmd_line);
                             my_job_list.addJob(external_command_in_cp, pid, true);
 
 
@@ -1040,7 +1040,7 @@ void JobsList::fgCommand(unsigned int jobId, pid_t *pid_to_update) {
                 cout << take_this_job_to_foreground->getCommand() << "& : " << take_this_job_to_foreground->getpid()
                      << std::endl;
             } else {
-                cout << take_this_job_to_foreground->getCommand() << ": " << take_this_job_to_foreground->getpid()
+                cout << take_this_job_to_foreground->getCommand() << " : " << take_this_job_to_foreground->getpid()
                      << std::endl;
             }
                 //the last job is foregroundCommand
