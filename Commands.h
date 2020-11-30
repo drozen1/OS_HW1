@@ -260,7 +260,7 @@ class JobEntry {
     time_t last_start_time;
     double running_time;
     pid_t pid;
-    char* cmd_line;
+    char cmd_line[COMMAND_ARGS_MAX_LENGTH];
     int len_cmd_line;
     bool stop_with_kill;
 public:
@@ -277,7 +277,8 @@ public:
         return this->cmd_line;
     }
     void set_cmd_line(char* cmd_line){
-        this->cmd_line=cmd_line;
+//        this->cmd_line=cmd_line;
+        strcpy(this->cmd_line,cmd_line);
     }
     void print_cmd_line(){
         std::cout<<cmd_line;
@@ -333,7 +334,7 @@ public:
     }
     void addJob(Command *cmd, pid_t pid, bool is_running);
 
-    void addJob_timeoutVec(pid_t pid, double duration,char *copy_cmd_line);
+    void addJob_timeoutVec(pid_t pid, double duration,char *copy_cmd_line, Command* c);
 
     void printJobsList();
 
@@ -349,6 +350,8 @@ public:
 
     void removeJobById(unsigned int jobId);
 
+    bool removeJobByPId(unsigned int jobPId);
+
     JobEntry *getLastJob(pid_t  *lastJobPId);
 
     void fgCommand(unsigned int jobId=0,pid_t* pid_to_update=0);
@@ -356,6 +359,10 @@ public:
     void bgCommand(unsigned int jobId=0);
 
     void killCommand(int JobId, int signum);
+
+    void set_alarm();
+
+    pid_t handler_signal_alarm();
 
     JobEntry *getLastStoppedJob(int *jobId);
     // TODO: Add extra methods or modify exisitng ones as needed
@@ -409,9 +416,17 @@ public:
     JobsList& gettimeout_list(){
         return this->timeout_list;
     }
+    void call_alarm_handler(){
+       pid_t pid_to_remove = this->timeout_list.handler_signal_alarm();
+       this->my_job_list.removeJobByPId(pid_to_remove);
+    }
+
+
     pid_t getFront_cmd_pid(){
         return front_cmd_pid;
     }
+
+
     void set_alarm();
 
     void setFront_cmd_pid(pid_t new_pid){

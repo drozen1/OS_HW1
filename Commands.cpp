@@ -138,7 +138,7 @@ vector <string> toSeparateTheString(char *cmd_line, char *symbol) {
         }
     }
     if (symbol == (char *) "timeout") {
-        time_string += args[0];
+        time_string += symbol;
         cmdParsed.push_back(time_string);
         cmd2 = args[1];
         i = 2;
@@ -214,6 +214,11 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
     }
     if (cmy_line_is_a_string.find(is_timeout) != string::npos) {
         symbol = is_timeout;
+        if(args[1]==NULL || args[2]==NULL){
+            //smash> smash error: timeout: invalid arguments
+            cout<<"smash error: timeout: invalid arguments"<<std::endl;
+            return nullptr;
+        }
     }
 
 
@@ -762,37 +767,36 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
         if (isBackground) {
             ///check if timeout with &
             if (symbol != NULL && symbol == (char *) "timeout") {
-                pid_t p = fork();
-                if (p == -1) {
-                    perror("smash error: fork failed");
-                    return nullptr;
-                }
-                if (p > 0) {
+//                    string duration_str = args[1];
+//                    double duration = atof(duration_str.c_str());
+//                    this->timeout_list.addJob_timeoutVec(p, duration, copy_cmd_line);
+//                    set_alarm();
+
+                    BackgroundCommand *e = new BackgroundCommand(args, len,copy_cmd_line);
                     string duration_str = args[1];
                     double duration = atof(duration_str.c_str());
-                    this->timeout_list.addJob_timeoutVec(p, duration, copy_cmd_line);
-                    ExternalCommand *e = new ExternalCommand(args, len, copy_cmd_line);
-                    my_job_list.addJob(e, p, true);
-                    set_alarm();
+                    this->timeout_list.addJob_timeoutVec(e->getpid(), duration, copy_cmd_line,e);
+                    my_job_list.addJob(e, e->getpid(), true);
+                    this->timeout_list.set_alarm();
                     return nullptr;
-                } else {
-                    ///son
-                    int check = setpgrp();
-                    if (check == -1) {
-                        perror("smash error: setpgrp failed");
-                        return nullptr;
-                    }
-                    char path[] = "/bin/bash";
-                    char *args_to_execv[] = {(char *) "bash", (char *) "-c",
-                                             const_cast<char *>(pars_string[1].c_str()),
-                                             nullptr};
-                    int ret = execv(path, args_to_execv);
-                    if (ret == -1) {
-                        perror("smash error: execv failed");
-                    }
-                    exit(0);
-                    return nullptr;
-                }
+//                } else {
+//                    ///son
+//                    int check = setpgrp();
+//                    if (check == -1) {
+//                        perror("smash error: setpgrp failed");
+//                        return nullptr;
+//                    }
+//                    char path[] = "/bin/bash";
+//                    char *args_to_execv[] = {(char *) "bash", (char *) "-c",
+//                                             const_cast<char *>(pars_string[1].c_str()),
+//                                             nullptr};
+//                    int ret = execv(path, args_to_execv);
+//                    if (ret == -1) {
+//                        perror("smash error: execv failed");
+//                    }
+//                    exit(0);
+//                    return nullptr;
+//                }
             }
             BackgroundCommand *beckCommand = new BackgroundCommand(args, len, copy_cmd_line);
             my_job_list.addJob(beckCommand, beckCommand->getpid(), true);
@@ -810,8 +814,8 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                 if (p > 0) {
                     string duration_str = args[1];
                     double duration = atof(duration_str.c_str());
-                    this->timeout_list.addJob_timeoutVec(p, duration, copy_cmd_line);
-                    set_alarm();
+                    this->timeout_list.addJob_timeoutVec(p, duration, copy_cmd_line,NULL);
+                    this->timeout_list.set_alarm();
                 }
             }
             ///to do:to understand hoe to get the time in this function
@@ -874,32 +878,32 @@ void SmallShell::executeCommand(const char *cmd_line, ChpromptCommand &call, Cha
     // Please note that you must fork smash process for some commands (e.g., external commands....)
 }
 
-void SmallShell::set_alarm() {
-
-    time_t timer;
-    time(&timer);
-    double min = numeric_limits<int>::max();
-    bool newAlarm = false;
-    for (vector<JobEntry>::iterator i = this->timeout_list.getVector().begin();
-         i != this->timeout_list.getVector().end(); ++i) {
-        //int nextAlarm = 0;
-        double duration = i->getRunning_time();
-        time_t startSeconds = i->getLast_start_time();
-        //time_t seconds = timer - (duration + startSeconds);
-        double seconds = difftime(startSeconds, timer);
-        seconds += duration;
-        //cout << "the duration: " << seconds << endl;
-        if (seconds < min) {
-            min = seconds;
-            newAlarm = true;
-        }
-    }
-    if (newAlarm) {
-        // cout<< "min " << min <<endl;
-        alarm(min);
-    }
-
-}
+//void SmallShell::set_alarm() {
+//
+//    time_t timer;
+//    time(&timer);
+//    double min = numeric_limits<int>::max();
+//    bool newAlarm = false;
+//    for (vector<JobEntry>::iterator i = this->timeout_list.getVector().begin();
+//         i != this->timeout_list.getVector().end(); ++i) {
+//        //int nextAlarm = 0;
+//        double duration = i->getRunning_time();
+//        time_t startSeconds = i->getLast_start_time();
+//        //time_t seconds = timer - (duration + startSeconds);
+//        double seconds = difftime(startSeconds, timer);
+//        seconds += duration;
+//        //cout << "the duration: " << seconds << endl;
+//        if (seconds < min) {
+//            min = seconds;
+//            newAlarm = true;
+//        }
+//    }
+//    if (newAlarm) {
+//        // cout<< "min " << min <<endl;
+//        alarm(min);
+//    }
+//
+//}
 
 void ShowPidCommand::execute() {
     SmallShell &smash = SmallShell::getInstance();
@@ -1050,6 +1054,17 @@ void JobsList::removeJobById(unsigned int jobId) {
     }
 }
 
+bool JobsList::removeJobByPId(unsigned int jobPId) {
+    for (vector<JobEntry>::iterator i = command_vector.begin(); i != command_vector.end(); ++i) {
+        unsigned int job_pid_iter = i->getpid();
+        if (job_pid_iter == jobPId) {
+            command_vector.erase(i);
+            return true;
+        }
+    }
+    return false;
+}
+
 void JobsList::fgCommand(unsigned int jobId, pid_t *pid_to_update) {
     //whitout jod id
     if (jobId == 0) {
@@ -1144,53 +1159,7 @@ void JobsList::fgCommand(unsigned int jobId, pid_t *pid_to_update) {
     //do'nt find this job id
     cout << "smash error: fg: job-id " << jobId << " does not exist" << std::endl;
 }
-//void JobsList::fgCommand(int jobId) {
-//    //whitout jod id
-//    if (jobId == 0) {
-//        pid_t lastJobPId = -1;
-//        pid_t *prtLastJobPId = &lastJobPId;
-//
-//        if (command_vector.empty()) {
-//            cout << "smash error: fg: jobs list is empty" << "\n";
-//            return;
-//        } else {
-//            JobEntry *take_this_job_to_foreground = getLastJob(prtLastJobPId);
-//            ///to do :print what we need like the example
-//            if (take_this_job_to_foreground->getIs_running()) {
-//                cout << take_this_job_to_foreground->getCommand() << "& : " << take_this_job_to_foreground->getpid()
-//                     << "\n";
-//            } else {
-//                cout << take_this_job_to_foreground->getCommand() << ": " << take_this_job_to_foreground->getpid()
-//                     << "\n";
-//            }
-//            waitpid(*prtLastJobPId, nullptr, 0);
-//            removeJobById(command_vector.back().getJob_id());
-//            return;
-//        }
-//    }
-//    //find the job how have this job id
-//    for (vector<JobEntry>::iterator i = command_vector.begin(); i != command_vector.end(); ++i) {
-//        unsigned int job_id_iter = i->getJob_id();
-//        if (job_id_iter == jobId) {
-//            if (i->getIs_running()) {
-//                cout << i->getCommand() << "& : " << i->getpid() << "\n";
-//                waitpid(i->getpid(), nullptr, 0);
-//                command_vector.erase(i);
-//                return;
-//
-//            } else if (i->getIs_running() == false) {
-//                cout << i->getCommand() << " : " << i->getpid() << "\n";
-//                kill(i->getpid(), SIGCONT);
-//                waitpid(i->getpid(), nullptr, 0);
-//                command_vector.erase(i);
-//                return;
-//            }
-//        }
-//
-//    }
-//    //do'nt find this job id
-//    cout << "smash error: fg: job-id " << jobId << " does not exist" << "\n";
-//}
+
 
 void JobsList::killCommand(int JobId, int signum) {
     JobEntry *jobEntry = this->getJobById(JobId);
@@ -1266,7 +1235,12 @@ void JobsList::bgCommand(unsigned int jobId) {
                     cout << "smash error: bg: job-id " << jobId << " is already running in the background" << std::endl;
                     return;
                 } else {
-                    cout << i->getCommand() << " : " << i->getpid() << std::endl;
+                    if ((typeid(*i->get_real_command()) != typeid(BackgroundCommand))) {
+                        cout << i->getCommand() << " : " << i->getpid() << std::endl;
+                    } else {
+                        cout << i->getCommand() << "&: " << i->getpid() << std::endl;
+                    }
+                    //cout << i->getCommand() << " : " << i->getpid() << std::endl;
                     kill(i->getpid(), SIGCONT);
                     time_t curr_time = time(NULL);
                     i->setstopwithkill(false);
@@ -1322,11 +1296,80 @@ void JobsList::killAllJobs() {
 }
 
 
-void JobsList::addJob_timeoutVec(pid_t pid, double duration, char *copy_cmd_line) {
-    JobEntry new_job = JobEntry(1, true, nullptr, pid);
-    new_job.set_running_time(duration);
-    new_job.set_cmd_line(copy_cmd_line);
-    this->command_vector.push_back(new_job);
+void JobsList::addJob_timeoutVec(pid_t pid, double duration, char *copy_cmd_line, Command* c) {
+
+    if (this->command_vector.size() == 0) {
+        JobEntry new_job = JobEntry(1, true, c, pid);
+        new_job.set_running_time(duration);
+        new_job.set_cmd_line(copy_cmd_line);
+        this->command_vector.push_back(new_job);
+    } else {
+        unsigned int max_JobId = this->command_vector.back().getJob_id();
+        JobEntry new_job = JobEntry(1 + max_JobId, true, c, pid);
+        new_job.set_cmd_line(copy_cmd_line);
+        this->command_vector.push_back(new_job);
+    }
+}
+
+void JobsList::set_alarm() {
+        time_t timer;
+        time(&timer);
+        double min = numeric_limits<int>::max();
+        bool newAlarm = false;
+        for (vector<JobEntry>::iterator i = this->command_vector.begin();
+             i != this->command_vector.end(); ++i) {
+            //int nextAlarm = 0;
+            double duration = i->getRunning_time();
+            time_t startSeconds = i->getLast_start_time();
+            //time_t seconds = timer - (duration + startSeconds);
+            double seconds = difftime(startSeconds, timer);
+            seconds += duration;
+            //cout << "the duration: " << seconds << endl;
+            if (seconds < min) {
+                min = seconds;
+                newAlarm = true;
+            }
+        }
+        if (newAlarm) {
+            // cout<< "min " << min <<endl;
+            alarm(min);
+        }
+
+
+}
+
+pid_t JobsList::handler_signal_alarm() {
+//        SmallShell& smash = SmallShell::getInstance();
+        cout<< "smash: got an alarm"<<endl;
+        for (vector<JobEntry>::iterator it = this->command_vector.begin();
+             it != this->command_vector.end(); ++it) {
+            time_t timer = time(NULL);
+            time_t seconds = difftime(timer,it->getLast_start_time());
+            if (seconds == it->getRunning_time()){
+//                if (!it->finishedTimeout){
+                int pid = it->getpid();
+                cout<< "smash: ";
+                it->print_cmd_line();
+                if( it->get_real_command()!=NULL &&(typeid(*it->get_real_command()) == typeid(BackgroundCommand))){
+                    cout<< "&";
+                }
+                cout<< " timed out!" <<endl;
+                //timeout with pipe wont be tested, we can use kill
+                int res = kill(pid, SIGKILL);
+                if(res == -1){
+                    perror("smash error: kill failed");
+                }
+//                }
+                this->removeJobById(it->getJob_id());
+                this->set_alarm();
+//                smash.set_alarm();
+                return it->getpid();
+            }
+        }
+    //this->set_alarm(); ??????????????? add??
+//        this->command_vector.set_alarm();
+        //smash.set_alarm();
+        return -1;
 }
 //void JobsList::bgCommand(int jobId) {
 ////whitout jod id
