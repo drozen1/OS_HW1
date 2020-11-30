@@ -544,16 +544,19 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                         char path[] = "/bin/bash";
                         if (res == -1) {
                             perror("smash error: setpgrp failed");
+                            exit(0);
                             return nullptr;
                         }
                         //to all the commands
                         int stdout_copy = dup(1);
                         if (stdout_copy == -1) {
                             perror("smash error: dup failed");
+                            exit(0);
                             return nullptr;
                         }
                         if (close(1) == -1) {
                             perror("smash error: close failed");
+                            exit(0);
                             return nullptr;
                         }
                         int opened = 0;
@@ -572,15 +575,18 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                                                      nullptr};
                             int ret = execv(path, args_to_execv);
                             if (ret == -1) {
+                                exit(0);
                                 perror("smash error: execv failed");
                             }
                             int check = close(1);
                             if (check == -1) {
+                                exit(0);
                                 perror("smash error: close failed");
                                 return nullptr;
                             }
                             check = dup2(stdout_copy, 1);
                             if (check == -1) {
+                                exit(0);
                                 perror("smash error: dup failed");
                                 return nullptr;
                             }
@@ -590,16 +596,19 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                                                      nullptr};
                             int ret = execv(path, args_to_execv);;
                             if (ret == -1) {
+                                exit(0);
                                 perror("smash error: execv failed");
                             }
                             int check = close(1);
                             if (check == -1) {
                                 perror("smash error: close failed");
+                                exit(0);
                                 return nullptr;
                             }
                             check = dup2(stdout_copy, 1);
                             if (check == -1) {
                                 perror("smash error: dup failed");
+                                exit(0);
                                 return nullptr;
                             }
                             exit(0);
@@ -880,6 +889,27 @@ void SmallShell::executeCommand(const char *cmd_line, ChpromptCommand &call, Cha
     // Please note that you must fork smash process for some commands (e.g., external commands....)
 }
 
+void SmallShell::remove_finish_jobs_from_timeout_vec() {
+    vector<pid_t> vector_of_timeout_pid;
+    pid_t pid_to_remove=-1;
+    if(this->there_is_a_process_running_in_the_front){
+        pid_to_remove = this->front_cmd_pid;
+    }
+    for (vector<JobEntry>::iterator i = this->timeout_list.getVector().begin();
+         i != this->timeout_list.getVector().end(); ++i) {
+        pid_t pid_i = i->getpid();
+        if (pid_to_remove != pid_i) {
+            vector_of_timeout_pid.push_back(pid_i);
+        }
+    }
+    for (vector<pid_t>::iterator i = vector_of_timeout_pid.begin();
+         i != vector_of_timeout_pid.end(); ++i) {
+        if(nullptr == this->my_job_list.getJobByPid(*i)){
+            this->timeout_list.removeJobByPId(*i);
+        }
+    }
+}
+
 //void SmallShell::set_alarm() {
 //
 //    time_t timer;
@@ -1030,6 +1060,7 @@ void JobsList::removeFinishedJobs() {
     for (vector<JobEntry>::iterator i = command_vector.begin(); i != command_vector.end(); ++i) {
         if (waitpid(i.operator*().getpid(), NULL, WNOHANG) > 0) {
             delete i->get_real_command();
+
             command_vector.erase(i);
         }
         ///way wh need this????
@@ -1352,7 +1383,7 @@ void JobsList::set_alarm() {
 
 pid_t JobsList::handler_signal_alarm() {
 //        SmallShell& smash = SmallShell::getInstance();
-        cout<< "smash: got an alarm"<<endl;
+//        cout<< "smash: got an alarm"<<endl;
         for (vector<JobEntry>::iterator it = this->command_vector.begin();
              it != this->command_vector.end(); ++it) {
             time_t timer = time(NULL);
@@ -1360,6 +1391,7 @@ pid_t JobsList::handler_signal_alarm() {
             if (seconds == it->getRunning_time()){
 //                if (!it->finishedTimeout){
                 int pid = it->getpid();
+                cout<< "smash: got an alarm"<<endl;
                 cout<< "smash: ";
                 it->print_cmd_line();
                 if( it->get_real_command()!=NULL &&(typeid(*it->get_real_command()) == typeid(BackgroundCommand))){

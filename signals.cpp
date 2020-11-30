@@ -36,7 +36,11 @@ void ctrlCHandler(int sig_num) {
 void alarmHandler(int sig_num) {
     if (sig_num == SIGALRM) {
         SmallShell &smash = SmallShell::getInstance();
-        smash.call_alarm_handler();
+        smash.getJobList().removeFinishedJobs();
+        smash.remove_finish_jobs_from_timeout_vec();
+        if(smash.gettimeout_list().getVector().size()>0 ) {
+            smash.call_alarm_handler();
+        }
     }
 }
 

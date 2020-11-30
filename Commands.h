@@ -409,10 +409,15 @@ public:
         there_is_a_process_running_in_the_front=b;
     }
 
+
+
     Command *CreateCommand(const char *cmd_line, ChpromptCommand &call, ChangeDirCommand &cd);
     JobsList& getJobList(){
         return this->my_job_list;
     }
+
+    void remove_finish_jobs_from_timeout_vec();
+
     JobsList& gettimeout_list(){
         return this->timeout_list;
     }
