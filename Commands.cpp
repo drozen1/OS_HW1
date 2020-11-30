@@ -364,11 +364,12 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
             char k4[] = "pwd";
             char k5[] = "jobs";
             char k6[] = "fg";
+            char k7[] = "ls";
             char k10[] = "quit";
             char k8[] = "cd";
             char k9[] = "bg";
 
-            if (strcmp(k1, args[0]) == 0 || strcmp(k3, args[0]) == 0 || strcmp(k4, args[0]) == 0 ||
+            if (strcmp(k1, args[0]) == 0 || strcmp(k3, args[0]) == 0 || strcmp(k4, args[0]) == 0 || strcmp(k7, args[0]) == 0 ||
                 strcmp(k8, args[0]) == 0 || strcmp(k5, args[0]) == 0 || strcmp(k2, args[0]) == 0 ||
                 strcmp(k6, args[0]) == 0 || strcmp(k9, args[0]) == 0 || strcmp(k10, args[0]) == 0 ||
                 (name_of_file != NULL && (
@@ -714,7 +715,9 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                         if (pid > 0) {
 
                             if (isBackground) { //papa isBackground
-                                ExternalCommand *external_command_in_cp = new ExternalCommand(args, len,
+                                char a= '&';
+                                args[3]= &a;
+                                ExternalCommand *external_command_in_cp = new ExternalCommand(args, len+1,
                                                                                               copy_cmd_line);
                                 my_job_list.addJob(external_command_in_cp, pid, true);
                             } else {//frontgroundCommand father shood wait
@@ -744,7 +747,6 @@ Command *SmallShell::CreateCommand(const char *cmd_line, ChpromptCommand &call, 
                         int opened = open(file1, O_RDONLY, 0666);
                         if (opened == -1) {
                             perror("smash error: open failed");
-                            exit(0);
                             return nullptr;
                         } else {
                             cout << "smash: " << file1 << " was copied to " << file2 << endl;
@@ -956,16 +958,23 @@ void JobsList::printJobsList() {
         time_t curr_time = time(NULL);
         double diff_time = difftime(curr_time, i->getLast_start_time()) + i->getRunning_time();
         double diff_time_stopped = i->getRunning_time();
+
+        //char* args0 = (i->get_real_command()->get_args()[0]);
+
         pid_t pid = i->getpid();
-//            int status;
         bool stop_with_kill = i->getstopWithKill();
-//            if (waitpid(pid, &status, WUNTRACED| WNOHANG) > 0 ){
-//                if(WIFSTOPPED(status)){
-//                    b=true;
-//                }
+//        string s="cp";
+//        bool is_cp=false;
+//         char* cp = const_cast<char *>(s.c_str());
+//        if(strcmp(args0,cp)==0) {
+//            char x = *(i->get_real_command()->get_args()[3]);
+//            if (x== '&'){
+//                is_cp=true;
 //            }
+//        }
         if (stop_with_kill) {
-            ////stop with kill
+            //cout<<"line 962";
+            //stop with kill
             if ((typeid(*i->get_real_command()) == typeid(BackgroundCommand))) {
                 cout << "[" << job_id << "] " << command_name << "& : " << pid << " " << diff_time_stopped
                      << " secs" << std::endl;
@@ -977,6 +986,7 @@ void JobsList::printJobsList() {
         } else {
             ////runing
             if (i->getIs_running()) {
+//                cout<<"line 975";
                 if ((typeid(*i->get_real_command()) == typeid(BackgroundCommand))) {
                     cout << "[" << job_id << "] " << command_name << "& : " << pid << " " << diff_time << " secs"
                          << std::endl;
@@ -1048,6 +1058,7 @@ void JobsList::removeJobById(unsigned int jobId) {
     for (vector<JobEntry>::iterator i = command_vector.begin(); i != command_vector.end(); ++i) {
         unsigned int job_id_iter = i->getJob_id();
         if (job_id_iter == jobId) {
+            //delete(i->get_real_command());
             command_vector.erase(i);
             return;
         }
@@ -1058,6 +1069,7 @@ bool JobsList::removeJobByPId(unsigned int jobPId) {
     for (vector<JobEntry>::iterator i = command_vector.begin(); i != command_vector.end(); ++i) {
         unsigned int job_pid_iter = i->getpid();
         if (job_pid_iter == jobPId) {
+            //delete(i->get_real_command());
             command_vector.erase(i);
             return true;
         }

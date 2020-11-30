@@ -41,7 +41,7 @@ public:
         ///to do: check if we free all the elements
         for (int i = 0; i < len; i++) {
             //we use malloc so we need to free it and not delete it
-            free(args[i]);
+            //free(args[i]);
         }
         //free(*args);
     };
@@ -329,7 +329,7 @@ public:
     JobsList() {};
 
     ~JobsList() {};
-    std::vector<JobEntry> getVector(){
+    std::vector<JobEntry>& getVector(){
         return this->command_vector;
     }
     void addJob(Command *cmd, pid_t pid, bool is_running);
