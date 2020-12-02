@@ -1349,24 +1349,25 @@ void JobsList::addJob_timeoutVec(pid_t pid, double duration, char *copy_cmd_line
     } else {
         unsigned int max_JobId = this->command_vector.back().getJob_id();
         JobEntry new_job = JobEntry(1 + max_JobId, true, c, pid);
+        new_job.set_running_time(duration);
         new_job.set_cmd_line(copy_cmd_line);
         this->command_vector.push_back(new_job);
     }
 }
 
 void JobsList::set_alarm() {
-        time_t timer;
-        time(&timer);
+        time_t timer = time(NULL);
         double min = numeric_limits<int>::max();
         bool newAlarm = false;
         for (vector<JobEntry>::iterator i = this->command_vector.begin();
              i != this->command_vector.end(); ++i) {
             //int nextAlarm = 0;
+
             double duration = i->getRunning_time();
             time_t startSeconds = i->getLast_start_time();
             //time_t seconds = timer - (duration + startSeconds);
-            double seconds = difftime(startSeconds, timer);
-            seconds += duration;
+            double seconds = difftime(timer,startSeconds);
+            seconds = duration-seconds;
             //cout << "the duration: " << seconds << endl;
             if (seconds < min) {
                 min = seconds;
@@ -1388,7 +1389,7 @@ pid_t JobsList::handler_signal_alarm() {
              it != this->command_vector.end(); ++it) {
             time_t timer = time(NULL);
             time_t seconds = difftime(timer,it->getLast_start_time());
-            if (seconds == it->getRunning_time()){
+            if (seconds >= it->getRunning_time()){
 //                if (!it->finishedTimeout){
                 int pid = it->getpid();
                 cout<< "smash: got an alarm"<<endl;
